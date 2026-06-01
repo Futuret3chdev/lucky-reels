@@ -67,6 +67,16 @@ body {
   transition: filter 0.1s ease;
 }
 
+/* Mobile responsive symbol size - critical fix */
+@media (max-width: 640px) {
+  .symbol {
+    font-size: 32px;
+  }
+  .reel {
+    height: 168px !important;
+  }
+}
+
 .win-line {
   position: absolute;
   left: 0;

@@ -1176,14 +1176,14 @@ export default function SolanaReels() {
 
   // ==================== RENDER ====================
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#e2e2e8] selection:bg-[#d4af37] selection:text-[#0a0a0f]">
+    <div className="min-h-screen bg-[#0a0a0f] text-[#e2e2e8] selection:bg-[#d4af37] selection:text-[#0a0a0f] overflow-x-hidden">
       <Toaster position="top-center" richColors closeButton />
 
       {/* Top Bar - Clean MT ECO SYSTEM Branding */}
       <div className="border-b border-[#222228] bg-[#0a0a0f]/95 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div>
-            <div className="font-display text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
+            <div className="font-display text-lg sm:text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
             <div className="text-[11px] text-[#8a8a94] -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
           </div>
 
@@ -1225,7 +1225,7 @@ export default function SolanaReels() {
                     key={w}
                     onClick={() => connectWallet(w)}
                     disabled={isConnecting}
-                    className="wallet-btn flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium border border-[#33333a] hover:border-[#9945ff] active:scale-[0.985] transition-all"
+                    className="wallet-btn flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-medium border border-[#33333a] hover:border-[#9945ff] active:scale-[0.985] transition-all"
                   >
                     <Wallet size={15} />
                     <span className="capitalize">{w}</span>
@@ -1237,13 +1237,13 @@ export default function SolanaReels() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 pt-6 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 sm:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* THE MACHINE */}
           <div className="lg:col-span-8">
-            <div className="slot-machine rounded-3xl p-8 relative">
+            <div className="slot-machine rounded-3xl p-4 sm:p-6 lg:p-8 relative">
               {/* Reels */}
-              <div className="grid grid-cols-5 gap-2.5 bg-[#0a0a0f] p-4 rounded-2xl border border-[#222228]">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5 bg-[#0a0a0f] p-3 sm:p-4 rounded-2xl border border-[#222228]">
                 {reels.map((reel, reelIndex) => (
                   <div key={reelIndex} className="reel rounded-2xl h-[218px] relative">
                     <div className="absolute inset-0 flex flex-col justify-center gap-1 px-1">
@@ -1288,69 +1288,72 @@ export default function SolanaReels() {
               </div>
 
               {/* Controls */}
-              <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <div className="text-xs tracking-widest text-[#8a8a94] mb-2 flex items-center justify-between">
-                    BET AMOUNT
-                    {/* Currency Selector */}
-                    <div className="flex rounded-lg overflow-hidden border border-[#33333a] text-xs">
-                      <button
-                        onClick={() => setSelectedCurrency('MEMETORRENT')}
-                        className={`px-2 py-0.5 ${selectedCurrency === 'MEMETORRENT' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
-                      >
-                        {TOKEN_SYMBOL}
-                      </button>
-                      <button
-                        onClick={() => setSelectedCurrency('SOL')}
-                        className={`px-2 py-0.5 ${selectedCurrency === 'SOL' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
-                      >
-                        SOL
-                      </button>
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-end justify-between gap-4">
+                {/* Bet + Spin group - stacks vertically on mobile for better usability */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto">
+                  <div className="flex-1 sm:flex-none">
+                    <div className="text-xs tracking-widest text-[#8a8a94] mb-2 flex items-center justify-between">
+                      BET AMOUNT
+                      {/* Currency Selector */}
+                      <div className="flex rounded-lg overflow-hidden border border-[#33333a] text-xs">
+                        <button
+                          onClick={() => setSelectedCurrency('MEMETORRENT')}
+                          className={`px-2 py-0.5 ${selectedCurrency === 'MEMETORRENT' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
+                        >
+                          {TOKEN_SYMBOL}
+                        </button>
+                        <button
+                          onClick={() => setSelectedCurrency('SOL')}
+                          className={`px-2 py-0.5 ${selectedCurrency === 'SOL' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
+                        >
+                          SOL
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => adjustBet(-1)} 
-                      disabled={isSpinning}
-                      className="w-11 h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
-                    >
-                      <Minus size={18} />
-                    </button>
-                    
-                    <div className="px-8 py-3 bg-[#1a1a22] rounded-3xl border border-[#33333a] min-w-[148px] text-center relative">
-                      <span className="font-mono text-4xl font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
-                      <span className="ml-1.5 text-[#8a8a94]">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => adjustBet(-1)} 
+                        disabled={isSpinning}
+                        className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
+                      >
+                        <Minus size={16} />
+                      </button>
                       
-                      {selectedCurrency === 'MEMETORRENT' && (
-                        <div className="absolute -top-2 -right-2 bg-[#14f195] text-[#0a0a0f] text-[9px] px-1.5 py-0.5 rounded-full font-bold">
-                          +25% RTP
-                        </div>
-                      )}
-                      {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && (
-                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-[#f59e0b] whitespace-nowrap">
-                          Need some SOL for fees
-                        </div>
-                      )}
+                      <div className="flex-1 sm:flex-none px-5 sm:px-8 py-2.5 sm:py-3 bg-[#1a1a22] rounded-3xl border border-[#33333a] min-w-[120px] sm:min-w-[148px] text-center relative">
+                        <span className="font-mono text-3xl sm:text-4xl font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
+                        <span className="ml-1.5 text-[#8a8a94]">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
+                        
+                        {selectedCurrency === 'MEMETORRENT' && (
+                          <div className="absolute -top-2 -right-2 bg-[#14f195] text-[#0a0a0f] text-[9px] px-1.5 py-0.5 rounded-full font-bold">
+                            +25% RTP
+                          </div>
+                        )}
+                        {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && (
+                          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-[#f59e0b] whitespace-nowrap">
+                            Need some SOL for fees
+                          </div>
+                        )}
+                      </div>
+
+                      <button 
+                        onClick={() => adjustBet(1)} 
+                        disabled={isSpinning}
+                        className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
+                      >
+                        <Plus size={16} />
+                      </button>
                     </div>
-
-                    <button 
-                      onClick={() => adjustBet(1)} 
-                      disabled={isSpinning}
-                      className="w-11 h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
-                    >
-                      <Plus size={18} />
-                    </button>
                   </div>
-                </div>
 
-                <button
-                  onClick={spin}
-                  disabled={isSpinning || isSendingBet || !walletAddress}
-                  className="btn-gold text-xl px-16 py-5 rounded-3xl flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all"
-                >
-                  <Play className="w-6 h-6" /> 
-                  {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : t('spin_btn')}
-                </button>
+                  <button
+                    onClick={spin}
+                    disabled={isSpinning || isSendingBet || !walletAddress}
+                    className="btn-gold text-base sm:text-xl px-8 sm:px-16 py-4 sm:py-5 rounded-3xl flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all w-full sm:w-auto"
+                  >
+                    <Play className="w-6 h-6" /> 
+                    {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : t('spin_btn')}
+                  </button>
+                </div>
 
                 {/* Revenge Token Activator - improved visuals */}
                 {hasRevengeToken && !revengeTokenActive && (
@@ -1363,7 +1366,7 @@ export default function SolanaReels() {
                         description: '5 boosted spins active — revenge the house!' 
                       });
                     }}
-                    className="mt-3 w-full max-w-[260px] mx-auto py-3 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-[0.985] transition-all"
+                    className="mt-3 w-full max-w-[240px] sm:max-w-[260px] mx-auto py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-[0.985] transition-all"
                   >
                     ⚔️ {t('revenge_activate')} (5 spins)
                   </button>
@@ -1576,12 +1579,12 @@ export default function SolanaReels() {
       {/* Paytable Modal */}
       <AnimatePresence>
         {showPaytable && (
-          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowPaytable(false)}>
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-end sm:items-center justify-center p-2 sm:p-6" onClick={() => setShowPaytable(false)}>
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-lg w-full p-8"
+              className="bg-[#111115] border border-[#33333a] rounded-t-3xl sm:rounded-3xl max-w-[95vw] sm:max-w-lg w-full p-4 sm:p-6 max-h-[92dvh] sm:max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="font-display text-3xl tracking-tight mb-6">Paytable</div>
@@ -1616,19 +1619,19 @@ export default function SolanaReels() {
       {/* Shop Modal - Spend Rockets */}
       <AnimatePresence>
         {showShop && (
-          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowShop(false)}>
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-end sm:items-center justify-center p-2 sm:p-6" onClick={() => setShowShop(false)}>
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-lg w-full p-8"
+              className="bg-[#111115] border border-[#33333a] rounded-t-3xl sm:rounded-3xl max-w-[95vw] sm:max-w-lg w-full p-4 sm:p-6 max-h-[92dvh] sm:max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
-              <div className="font-display text-3xl tracking-tight mb-2">{t('shop_title')}</div>
-              <div className="text-sm text-[#8a8a94] mb-4">{t('shop_sub')}</div>
+              <div className="font-display text-2xl sm:text-3xl tracking-tight mb-2">{t('shop_title')}</div>
+              <div className="text-xs sm:text-sm text-[#8a8a94] mb-3 sm:mb-4">{t('shop_sub')}</div>
 
               {/* Buy Rockets Section inside Shop - real on-chain $MT transfers */}
-              <div className="mb-4 p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
+              <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
                 <div className="text-sm font-medium text-[#d4af37] mb-2">{t('buy_mt_title')}</div>
                 <div className="grid grid-cols-1 gap-2">
                   <button 
@@ -1647,9 +1650,9 @@ export default function SolanaReels() {
                 <div className="text-[10px] text-[#8a8a94] mt-2 text-center">{t('buy_mt_note')}</div>
               </div>
 
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2 sm:space-y-3 text-sm">
                 {/* Existing */}
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>{t('extra_spins')}</div>
                   <button 
                     onClick={() => { if (rockets >= 25) { setRockets(r => r - 25); toast.success('10 Extra Spins added!'); } else toast.error('Not enough Rockets'); }}
@@ -1659,7 +1662,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>{t('multiplier_2x')}</div>
                   <button 
                     onClick={() => { if (rockets >= 50) { setRockets(r => r - 50); toast.success('2x Multiplier activated!'); } else toast.error('Not enough Rockets'); }}
@@ -1669,7 +1672,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>{t('cosmetic_logo')}</div>
                   <button 
                     onClick={() => { if (rockets >= 100) { setRockets(r => r - 100); toast.success('Cosmetic unlocked! (Coming to all games)'); } else toast.error('Not enough Rockets'); }}
@@ -1680,7 +1683,7 @@ export default function SolanaReels() {
                 </div>
 
                 {/* New expanded Shop items - more ways to spend Rockets meaningfully */}
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('revenge_refill')} <span className="text-[10px] text-[#8a8a94]">· {t('revenge_refill_desc')}</span>
                   </div>
@@ -1703,7 +1706,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('streak_saver')} <span className="text-[10px] text-[#8a8a94]">· {t('streak_saver_desc')}</span>
                   </div>
@@ -1715,7 +1718,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('xp_blast')} <span className="text-[10px] text-[#8a8a94]">· {t('xp_blast_desc')}</span>
                   </div>
@@ -1735,7 +1738,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('scatter_surge')} <span className="text-[10px] text-[#8a8a94]">· {t('scatter_surge_desc')}</span>
                   </div>
@@ -1747,7 +1750,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('auto_bundle')} <span className="text-[10px] text-[#8a8a94]">· {t('auto_bundle_desc')}</span>
                   </div>
@@ -1759,7 +1762,7 @@ export default function SolanaReels() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                <div className="flex justify-between items-center p-2 sm:p-3 bg-[#1a1a22] rounded-2xl">
                   <div>
                     {t('eco_badge')} <span className="text-[10px] text-[#8a8a94]">· {t('eco_badge_desc')}</span>
                   </div>
@@ -1817,7 +1820,7 @@ export default function SolanaReels() {
                   setShowShop(false);
                   setLastRocketPurchase(null); // clear success state when closing
                 }} 
-                className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium"
+                className="mt-4 sm:mt-6 w-full py-3 sm:py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium"
               >
                 {t('shop_close')}
               </button>
@@ -1834,7 +1837,7 @@ export default function SolanaReels() {
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-md w-full p-8"
+              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-[95vw] sm:max-w-md w-full p-5 sm:p-8"
               onClick={e => e.stopPropagation()}
             >
               <div className="font-display text-3xl tracking-tight mb-6">{t('settings')}</div>
