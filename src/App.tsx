@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Wallet, 
   Play, 
   RotateCcw, 
   Trophy, 
@@ -1182,8 +1181,8 @@ export default function SolanaReels() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             <div>
-              <div className="font-display text-lg sm:text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
-              <div className="text-[11px] text-[#8a8a94] -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
+              <div className="font-display text-lg sm:text-xl font-bold tracking-[-1px] text-[#14f195]">MT ECO SYSTEM</div>
+              <div className="text-[11px] text-[#14f195]/70 -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
             </div>
 
             {/* PAYTABLE / SHOP / AUTO 25 — now in top bar near heading */}
@@ -1246,17 +1245,33 @@ export default function SolanaReels() {
             ) : (
               <div className="flex items-center gap-2">
                 <div className="text-xs text-[#8a8a94] mr-1 hidden sm:block">Connect to bet {TOKEN_SYMBOL}:</div>
-                {(['phantom', 'solflare', 'backpack'] as const).map((w) => (
-                  <button
-                    key={w}
-                    onClick={() => connectWallet(w)}
-                    disabled={isConnecting}
-                    className="wallet-btn flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-medium border border-[#33333a] hover:border-[#9945ff] active:scale-[0.985] transition-all"
-                  >
-                    <Wallet size={15} />
-                    <span className="capitalize">{w}</span>
-                  </button>
-                ))}
+
+                {/* Phantom - purple brand */}
+                <button
+                  onClick={() => connectWallet('phantom')}
+                  disabled={isConnecting}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-medium border transition-all active:scale-[0.985] bg-[#AB9FF2]/10 text-[#C4B5FD] border-[#AB9FF2]/40 hover:bg-[#AB9FF2]/20 hover:border-[#AB9FF2]"
+                >
+                  👻 <span>Phantom</span>
+                </button>
+
+                {/* Solflare - orange/flame brand */}
+                <button
+                  onClick={() => connectWallet('solflare')}
+                  disabled={isConnecting}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-medium border transition-all active:scale-[0.985] bg-[#FF9B33]/10 text-[#FDBA74] border-[#FF9B33]/40 hover:bg-[#FF9B33]/20 hover:border-[#FF9B33]"
+                >
+                  🔥 <span>Solflare</span>
+                </button>
+
+                {/* Backpack - pink brand */}
+                <button
+                  onClick={() => connectWallet('backpack')}
+                  disabled={isConnecting}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-medium border transition-all active:scale-[0.985] bg-[#E33E7F]/10 text-[#F9A8D4] border-[#E33E7F]/40 hover:bg-[#E33E7F]/20 hover:border-[#E33E7F]"
+                >
+                  🎒 <span>Backpack</span>
+                </button>
               </div>
             )}
           </div>
@@ -1852,12 +1867,13 @@ export default function SolanaReels() {
                   <div className="text-[#8a8a94] mb-2">{t('socials_title')}</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { key: 'telegram', label: 'Telegram', url: 'https://t.me/memetorrent' },
-                      { key: 'discord', label: 'Discord', url: 'https://discord.gg/futuret3ch' },
-                      { key: 'x', label: 'X (Twitter)', url: 'https://x.com/Futuret3chdev' },
-                      { key: 'facebook', label: 'Facebook', url: 'https://facebook.com/futuret3ch' },
+                      { key: 'telegram', label: 'Telegram', icon: '✈️', brand: '#26A5E4', url: 'https://t.me/memetorrent' },
+                      { key: 'discord', label: 'Discord', icon: '💬', brand: '#5865F2', url: 'https://discord.gg/futuret3ch' },
+                      { key: 'x', label: 'X', icon: '𝕏', brand: '#FFFFFF', url: 'https://x.com/Futuret3chdev' },
+                      { key: 'facebook', label: 'Facebook', icon: 'f', brand: '#1877F2', url: 'https://facebook.com/futuret3ch' },
                     ].map((social) => {
                       const isConnected = !!connectedSocials[social.key];
+                      const brandColor = social.brand;
                       return (
                         <button
                           key={social.key}
@@ -1867,9 +1883,7 @@ export default function SolanaReels() {
                             setConnectedSocials(newSocials);
 
                             if (!wasConnected) {
-                              // Real connect action: open community link
                               if (social.url) window.open(social.url, '_blank');
-                              // Honest first-connect reward (local P2E, visible immediately)
                               if (!wasConnected) {
                                 setRockets(r => r + 8);
                                 toast.success(`Connected to ${social.label} +8 Rockets`, {
@@ -1883,10 +1897,11 @@ export default function SolanaReels() {
                           className={`py-2.5 rounded-2xl border text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                             isConnected 
                               ? 'bg-[#14f195]/10 text-[#14f195] border-[#14f195]/50' 
-                              : 'bg-[#1a1a22] border-[#33333a] hover:bg-[#25252d] hover:border-[#9945ff]'
+                              : `bg-[#1a1a22] border-[#33333a] hover:bg-[#25252d] hover:border-[${brandColor}]/60`
                           }`}
+                          style={!isConnected ? { color: brandColor } : undefined}
                         >
-                          {isConnected ? '✓ ' : ''}{social.label}
+                          <span>{social.icon}</span> {social.label}
                         </button>
                       );
                     })}
