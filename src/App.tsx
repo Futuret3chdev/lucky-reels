@@ -430,21 +430,21 @@ export default function SolanaReels() {
 
   const refreshTokenBalance = async (pubkey: PublicKey) => {
     try {
-      const tokenAccounts = await CONNECTION.getParsedTokenAccountsByOwner(pubkey, {
-        mint: MEMETORRENT_MINT,
-      });
+      // More reliable method: calculate the ATA and query it directly
+      const ata = await getAssociatedTokenAddress(MEMETORRENT_MINT, pubkey);
 
-      if (tokenAccounts.value.length > 0) {
-        const amount = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+      const accountInfo = await CONNECTION.getParsedAccountInfo(ata);
+
+      if (accountInfo.value && 'parsed' in accountInfo.value.data) {
+        const parsed = accountInfo.value.data.parsed;
+        const amount = parsed.info.tokenAmount.uiAmount || 0;
         setTokenBalance(amount);
       } else {
-        setTokenBalance(0); // User has no token account yet
+        // No ATA found for this mint — user has 0 balance or never received the token
+        setTokenBalance(0);
       }
     } catch (e: any) {
-      // This commonly happens if the user has no ATA for this mint yet, or RPC issues
-      if (!e?.message?.includes('could not find mint')) {
-        console.warn('Token balance fetch issue:', e?.message || e);
-      }
+      console.warn('Token balance fetch issue:', e?.message || e);
       setTokenBalance(0);
     }
   };
@@ -909,6 +909,13 @@ export default function SolanaReels() {
                 <div className="flex items-center gap-2 text-[#8a8a94]">
                   {TOKEN_NAME} Balance
                   <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{tokenBalance.toFixed(2)}</span>
+                  <button 
+                    onClick={() => walletAddress && refreshTokenBalance(new PublicKey(walletAddress))}
+                    className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-[#8a8a94]"
+                    title="Refresh token balance"
+                  >
+                    ↻
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   {[1, 2, 5].map(a => (
@@ -998,6 +1005,11 @@ export default function SolanaReels() {
               )}
               <div className="text-[10px] text-[#8a8a94] mt-4 leading-tight">
                 Bets are sent as real Mainnet transactions. Seeds prove the spin result was fair.
+                {tokenBalance === 0 && walletAddress && (
+                  <div className="mt-1 text-[#f59e0b]">
+                    $MEMETORRENT balance is 0. Make sure the token is imported in Phantom with mint: {MEMETORRENT_MINT.toBase58().slice(0,8)}...
+                  </div>
+                )}
               </div>
             </div>
 

@@ -120,6 +120,10 @@ You should now see a small badge next to "MAINNET" in the header:
 
 Clicking the green badge will show a toast with the masked RPC URL for confirmation.
 
+There is also a small **↻** button next to the $MEMETORRENT balance you can click to force refresh it.
+
+When the token balance shows 0, the app now shows a helpful note with the mint address to help users import it in Phantom.
+
 #### 2. Use it locally (for development)
 
 In your project folder (`E:\solana-reels`), create a file named **`.env.local`** (create it if it doesn't exist) and add this line:
