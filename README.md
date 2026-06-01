@@ -5,7 +5,9 @@
 A high-fidelity, production-quality frontend prototype featuring:
 
 - 100% real Solana wallet connections (Phantom, Solflare, Backpack)
-- **Real on-chain betting with $MEMETORRENT** — Users can buy the token and bet with it using real SPL token transfers on Mainnet (visible tx signature + explorer link)
+- **Real on-chain betting with $MEMETORRENT** — Users can buy the token and bet with it using real SPL token transfers on Mainnet. All $MEMETORRENT bets go directly to the MT Ecosystem treasury (35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD). A tiny amount of SOL is still required for transaction fees.
+- “Buy $MEMETORRENT” opens Jupiter with SOL → $MEMETORRENT.
+- “Get SOL for fees” now lets users swap a small amount of $MEMETORRENT for SOL (ecosystem-friendly).
 - Real on-chain balance display (Devnet)
 - Stunning luxury casino design with gold + Solana purple/green accents
 - Smooth, physically realistic 5-reel animations (Framer Motion)
@@ -142,6 +144,23 @@ This will make the app use your Helius key when developing locally.
 
 **Security Note**: Never commit your real API key. The `.env.local` file is already gitignored.
 
+The "Buy $MEMETORRENT" button now correctly opens Jupiter with SOL → $MEMETORRENT.
+
+The “Get SOL for fees” button lets players swap a small amount of $MEMETORRENT for SOL (keeping value inside the MT Ecosystem).
+
+Clear messaging throughout the UI reinforces that buying and betting with $MEMETORRENT helps fund the entire MT game network.
+
+---
+
+## Important: You Still Need Some SOL for Fees
+
+Even when betting with **$MEMETORRENT**, every transaction on Solana requires a small amount of SOL (~0.000005–0.00001 SOL) to pay network fees.
+
+If a user has 835 $MEMETORRENT but 0 SOL, they will see:
+> "You don't have enough SOL for this transaction"
+
+The app now shows clear warnings in the UI when SOL balance is too low for fees while betting with the token.
+
 ### Netlify
 1. Push to GitHub
 2. Go to [netlify.com](https://netlify.com) → Add new site → Import from Git
@@ -177,26 +196,22 @@ This is a known browser compatibility issue with Solana libraries.
 
 **I have already fixed this** in the code using `vite-plugin-node-polyfills`.
 
-### How to Deploy the Fix
-
-Run these commands in PowerShell:
+### How to Push These Latest Changes (Buy MT + Get SOL for Fees updates)
 
 ```powershell
 cd E:\solana-reels
 git add .
-git commit -m "Fixed 'Buffer is not defined' error with proper browser polyfills for Solana libraries"
+git commit -m "Updated Buy $MEMETORRENT and Get SOL for fees links to be fully ecosystem-friendly + added MT treasury messaging"
 git push
 ```
 
-Then:
+Then redeploy on Vercel (or let the push trigger auto-deploy).
 
-1. Go to your Vercel project.
-2. Wait for the automatic deployment from the push, **or** manually click **Redeploy** on the latest deployment.
-3. Once it shows "Ready", open the live site and do a **hard refresh**:
-   - Windows/Linux: `Ctrl + Shift + R`
-   - Mac: `Cmd + Shift + R`
-
-This should eliminate the `Buffer is not defined` error when trying to place on-chain bets with $MEMETORRENT.
+After deployment:
+- Hard refresh the live site (`Ctrl + Shift + R`)
+- Test the two Jupiter buttons:
+  - “Buy $MEMETORRENT” → should open SOL → MT
+  - “Get SOL for fees with $MEMETORRENT” → should open MT → SOL (10 tokens)
 
 ---
 

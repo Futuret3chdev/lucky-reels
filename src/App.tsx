@@ -73,6 +73,9 @@ const REEL_STRIPS: SymbolKey[][] = [
 
 // ==================== CONFIG ====================
 const BET_AMOUNTS = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0];
+
+// Minimum SOL needed for transaction fees (even when betting with $MEMETORRENT)
+const MIN_SOL_FOR_FEES = 0.002; // ~0.000005 is usually enough, but we show a buffer for UX
 // Solana RPC URL
 // Uses VITE_SOLANA_RPC_URL from environment variables (recommended for production).
 // Falls back to public mainnet RPC if not set (can cause 403 errors).
@@ -84,7 +87,11 @@ const CONNECTION = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 // House wallet for prototype real betting (visible in UI)
 // In production this would be a PDA controlled by an audited program.
-const HOUSE_WALLET = new PublicKey('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'); // Example devnet address (replace in real use)
+// SOL House wallet (for SOL bets)
+const HOUSE_WALLET = new PublicKey('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
+
+// $MEMETORRENT collection wallet for the MT Ecosystem (all MT bets go here)
+const MT_HOUSE_WALLET = new PublicKey('35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD');
 
 // Memetorrent Token (owned by the team)
 const MEMETORRENT_MINT = new PublicKey('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
@@ -468,6 +475,15 @@ export default function SolanaReels() {
       return;
     }
 
+    // Important: Even when betting with $MEMETORRENT, the user still needs a small amount of SOL for transaction fees
+    if (selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES) {
+      toast.error('Not enough SOL for transaction fees', {
+        description: `You need at least ~${MIN_SOL_FOR_FEES} SOL in your wallet to pay network fees when betting with ${TOKEN_SYMBOL}.`,
+        duration: 7000,
+      });
+      return;
+    }
+
     setIsSendingBet(true);
 
     try {
@@ -501,7 +517,7 @@ export default function SolanaReels() {
         const tokenAmount = Math.floor(bet * Math.pow(10, decimals));
 
         const userAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, userPubkey);
-        const houseAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, HOUSE_WALLET);
+        const houseAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, MT_HOUSE_WALLET);
 
         const transaction = new Transaction().add(
           createTransferInstruction(
@@ -861,6 +877,11 @@ export default function SolanaReels() {
                           +25% RTP
                         </div>
                       )}
+                      {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && (
+                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-[#f59e0b] whitespace-nowrap">
+                          Need some SOL for fees
+                        </div>
+                      )}
                     </div>
 
                     <button 
@@ -933,16 +954,32 @@ export default function SolanaReels() {
                     <span className="text-[#d4af37] font-medium">Bet with {TOKEN_NAME}</span>
                   </div>
                   <a 
-                    href={`https://jup.ag/swap/SOL-${MEMETORRENT_MINT.toBase58()}`}
+                    href={`https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=${MEMETORRENT_MINT.toBase58()}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 py-1 text-[10px] rounded bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
                   >
                     Buy {TOKEN_SYMBOL}
                   </a>
+
+                  <div className="text-[10px] text-[#8a8a94] text-center mt-1">
+                    Buying {TOKEN_SYMBOL} helps fund the MT Ecosystem
+                  </div>
                 </div>
-                <div className="text-[#8a8a94]">
-                  Your bets in {TOKEN_SYMBOL} are sent on-chain to the House.
+
+                {/* Get SOL for fees - Ecosystem friendly (swap $MEMETORRENT for SOL) */}
+                <a 
+                  href={`https://jup.ag/swap?sell=${MEMETORRENT_MINT.toBase58()}&buy=So11111111111111111111111111111111111111112&amount=10`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center mt-1 px-3 py-1.5 text-[11px] rounded bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-[#f59e0b]"
+                >
+                  Get SOL for fees with {TOKEN_SYMBOL} (10 tokens)
+                </a>
+
+                <div className="text-[#8a8a94] text-center">
+                  All {TOKEN_SYMBOL} bets go to the <span className="text-[#d4af37]">MT Ecosystem treasury</span>.<br />
+                  Buying {TOKEN_SYMBOL} helps fund the entire MT game network.
                 </div>
               </div>
             </div>
@@ -1004,10 +1041,25 @@ export default function SolanaReels() {
                 </div>
               )}
               <div className="text-[10px] text-[#8a8a94] mt-4 leading-tight">
-                Bets are sent as real Mainnet transactions. Seeds prove the spin result was fair.
+                {selectedCurrency === 'MEMETORRENT' 
+                  ? `All $MEMETORRENT bets go to the MT Ecosystem treasury.` 
+                  : 'Bets are sent as real Mainnet transactions.'} Seeds prove fairness. Buying MT supports the ecosystem.
                 {tokenBalance === 0 && walletAddress && (
                   <div className="mt-1 text-[#f59e0b]">
                     $MEMETORRENT balance is 0. Make sure the token is imported in Phantom with mint: {MEMETORRENT_MINT.toBase58().slice(0,8)}...
+                  </div>
+                )}
+                {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && walletAddress && (
+                  <div className="mt-1 text-[#f59e0b] font-medium">
+                    ⚠️ You need some SOL (~{MIN_SOL_FOR_FEES}) for transaction fees even when betting with {TOKEN_SYMBOL}.
+                    <a 
+                      href={`https://jup.ag/swap/USDC-SOL?amount=0.05`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 underline text-[#9945ff]"
+                    >
+                      Get SOL for fees →
+                    </a>
                   </div>
                 )}
               </div>
