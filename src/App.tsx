@@ -214,6 +214,7 @@ export default function SolanaReels() {
   const [history, setHistory] = useState<SpinHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPaytable, setShowPaytable] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [isSendingBet, setIsSendingBet] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('MEMETORRENT'); // Default to their token
   const [autoSpin, setAutoSpin] = useState(false);
@@ -629,6 +630,20 @@ export default function SolanaReels() {
       // Update on-chain balances
       await refreshBalance();
 
+      // Earn Rockets (P2E cross-game currency)
+      if (finalWin > 0) {
+        const baseRockets = Math.floor(finalWin * 2);
+        const bonus = selectedCurrency === 'MEMETORRENT' ? Math.floor(finalWin * 1.5) : 0;
+        let earned = baseRockets + bonus;
+
+        if (finalWin > bet * 8 && Math.random() < 0.3) earned += 25;
+
+        setRockets(prev => prev + earned);
+        if (earned > 0) {
+          toast.success(`+${earned} Rockets!`, { description: 'Use them in the MT Shop or other games.' });
+        }
+      }
+
       // History
       const historyEntry: SpinHistory = {
         timestamp: new Date().toISOString(),
@@ -916,6 +931,14 @@ export default function SolanaReels() {
                   <Trophy size={17} /> PAYTABLE
                 </button>
 
+                {/* Shop Button - Spend Rockets */}
+                <button 
+                  onClick={() => setShowShop(true)} 
+                  className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
+                >
+                  🛒 SHOP
+                </button>
+
                 {/* Auto Spin Toggle */}
                 <button
                   onClick={() => {
@@ -1117,6 +1140,64 @@ export default function SolanaReels() {
 
               <button onClick={() => setShowPaytable(false)} className="mt-8 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium">
                 CLOSE
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Shop Modal - Spend Rockets */}
+      <AnimatePresence>
+        {showShop && (
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowShop(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-lg w-full p-8"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="font-display text-3xl tracking-tight mb-2">MT Shop</div>
+              <div className="text-sm text-[#8a8a94] mb-6">Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.</div>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>10 Extra Spins</div>
+                  <button 
+                    onClick={() => { if (rockets >= 25) { setRockets(r => r - 25); toast.success('10 Extra Spins added!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    25 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>2x Multiplier (10 spins)</div>
+                  <button 
+                    onClick={() => { if (rockets >= 50) { setRockets(r => r - 50); toast.success('2x Multiplier activated!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    50 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>MT Logo Cosmetic</div>
+                  <button 
+                    onClick={() => { if (rockets >= 100) { setRockets(r => r - 100); toast.success('Cosmetic unlocked! (Coming to all games)'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    100 Rockets
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 text-xs text-[#8a8a94] text-center">
+                Rockets are earned across all MT games and can be used in the entire ecosystem.
+              </div>
+
+              <button onClick={() => setShowShop(false)} className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium">
+                CLOSE SHOP
               </button>
             </motion.div>
           </div>
