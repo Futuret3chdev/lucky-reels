@@ -150,6 +150,14 @@ The “Get SOL for fees” button lets players swap a small amount of $MEMETORRE
 
 Clear messaging throughout the UI reinforces that buying and betting with $MEMETORRENT helps fund the entire MT game network.
 
+**Wallet & Treasury Clarification**
+- The address 35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD is the **MT Ecosystem treasury** (recipient only).
+- Players always use their own connected wallet. You can switch accounts inside Phantom freely.
+- The app listens for account changes and disconnects.
+
+**Mobile Support**
+Basic deep link support added for Phantom and Solflare on mobile browsers. Full mobile wallet experience (especially in-app browsers) is still limited.
+
 ---
 
 ## Important: Treasury vs Your Wallet + Multiple Phantom Accounts

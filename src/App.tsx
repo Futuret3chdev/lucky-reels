@@ -360,12 +360,27 @@ export default function SolanaReels() {
 
       if (walletType === 'phantom') {
         provider = (window as any).phantom?.solana;
+
+        // Mobile support: if no extension, try deep link
+        if (!provider && /iPhone|Android/i.test(navigator.userAgent)) {
+          const url = window.location.href;
+          window.location.href = `https://phantom.app/ul/browse/${encodeURIComponent(url)}`;
+          throw new Error('Opening Phantom mobile...');
+        }
+
         if (!provider?.isPhantom) {
           window.open('https://phantom.app/', '_blank');
           throw new Error('Phantom not installed');
         }
       } else if (walletType === 'solflare') {
         provider = (window as any).solflare;
+
+        if (!provider && /iPhone|Android/i.test(navigator.userAgent)) {
+          const url = window.location.href;
+          window.location.href = `https://solflare.com/ul/browse/${encodeURIComponent(url)}`;
+          throw new Error('Opening Solflare mobile...');
+        }
+
         if (!provider) {
           window.open('https://solflare.com/', '_blank');
           throw new Error('Solflare not installed');
@@ -381,6 +396,9 @@ export default function SolanaReels() {
       if (!provider) throw new Error('Wallet not found');
 
       const resp = await provider.connect();
+      if (!resp?.publicKey) {
+        throw new Error('Failed to get public key from wallet');
+      }
       const publicKey = resp.publicKey.toString();
 
       setWalletAddress(publicKey);
@@ -403,7 +421,7 @@ export default function SolanaReels() {
       if (provider?.on) {
         const handleAccountChanged = (newPublicKey: any) => {
           if (newPublicKey) {
-            const newKey = newPublicKey.toString();
+            const newKey = newPublicKey?.toString ? newPublicKey.toString() : null;
             setWalletAddress(newKey);
             const newPub = new PublicKey(newKey);
             CONNECTION.getBalance(newPub).then(lamports => setBalance(lamports / LAMPORTS_PER_SOL));
@@ -1111,7 +1129,7 @@ export default function SolanaReels() {
                         </div>
                         {h.txSignature && (
                           <a 
-                            href={`https://explorer.solana.com/tx/${h.txSignature}?cluster=devnet`}
+                            href={`https://explorer.solana.com/tx/${h.txSignature}?cluster=mainnet`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#9945ff] hover:underline text-[10px]"
