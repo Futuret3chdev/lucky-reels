@@ -5,7 +5,7 @@
 A high-fidelity, production-quality frontend prototype featuring:
 
 - 100% real Solana wallet connections (Phantom, Solflare, Backpack)
-- **Real on-chain betting** — Your bet amount is sent as an actual Devnet transaction to the House before every spin (visible tx signature + explorer link)
+- **Real on-chain betting with $MEMETORRENT** — Users can buy the token and bet with it using real SPL token transfers on Devnet (visible tx signature + explorer link)
 - Real on-chain balance display (Devnet)
 - Stunning luxury casino design with gold + Solana purple/green accents
 - Smooth, physically realistic 5-reel animations (Framer Motion)
@@ -67,14 +67,31 @@ Every detail was crafted for "premium casino" feel:
 
 ---
 
+## Live Demo
+
+**https://lucky-reels.vercel.app** (or your custom domain)
+
+> ⚠️ This is running on Solana Devnet with real transactions. Use only test SOL.
+
 ## Deploy (One-Click)
 
 This project is fully polished and ready to deploy.
 
 ### Vercel (Recommended)
-1. Push this repo to GitHub
-2. Go to [vercel.com](https://vercel.com) → New Project → Import repo
-3. Deploy (no config needed — `vercel.json` is included)
+
+1. Push this repo to GitHub (you already did)
+2. Go to [https://vercel.com/new](https://vercel.com/new)
+3. Import your repo: `Futuret3chdev/lucky-reels`
+4. **On the configuration screen, set these exact values:**
+
+   - **Framework Preset**: `Vite`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
+
+   (Vercel sometimes auto-detects it, but manually selecting **Vite** is safest.)
+
+5. Click **Deploy**
 
 ### Netlify
 1. Push to GitHub

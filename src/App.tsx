@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wallet, 
@@ -19,6 +19,10 @@ import {
   SystemProgram, 
   Transaction 
 } from '@solana/web3.js';
+import { 
+  getAssociatedTokenAddress, 
+  createTransferInstruction 
+} from '@solana/spl-token';
 
 // ==================== TYPES ====================
 type SymbolKey = 'SOL' | 'DIAMOND' | 'SEVEN' | 'ROCKET' | 'CHERRY' | 'BAR' | 'BONK' | 'USDC' | 'GOLD';
@@ -75,6 +79,14 @@ const CONNECTION = new Connection('https://api.devnet.solana.com', 'confirmed');
 // In production this would be a PDA controlled by an audited program.
 const HOUSE_WALLET = new PublicKey('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'); // Example devnet address (replace in real use)
 
+// Memetorrent Token (owned by the team)
+const MEMETORRENT_MINT = new PublicKey('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
+const TOKEN_SYMBOL = '$MEMETORRENT';
+const TOKEN_NAME = 'Memetorrent';
+
+// Supported currencies
+type Currency = 'SOL' | 'MEMETORRENT';
+
 // ==================== HELPERS ====================
 function generateSeed(): string {
   const array = new Uint8Array(16);
@@ -87,16 +99,27 @@ function getSymbol(defKey: SymbolKey): SymbolDef {
 }
 
 // Simple but secure weighted random using crypto
-function secureWeightedChoice(strip: SymbolKey[]): SymbolKey {
+function secureWeightedChoice(strip: SymbolKey[], useTokenBonus: boolean = false): SymbolKey {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
   const rand = array[0] / (0xffffffff + 1); // 0-1
   
   // Weighted distribution (higher value symbols rarer)
-  const weights = strip.map((sym, _i) => {
+  let weights = strip.map((sym, _i) => {
     const base = SYMBOLS.findIndex(s => s.key === sym);
-    return Math.max(1, 12 - base); // rarer symbols have lower weight
+    return Math.max(1, 12 - base);
   });
+
+  // Bonus for betting with $MEMETORRENT: slightly better odds on high symbols
+  if (useTokenBonus) {
+    weights = weights.map((w, i) => {
+      const sym = strip[i];
+      if (sym === 'SOL' || sym === 'DIAMOND' || sym === 'SEVEN') {
+        return w * 1.25; // 25% better chance on top symbols
+      }
+      return w;
+    });
+  }
   
   const total = weights.reduce((a, b) => a + b, 0);
   let r = rand * total;
@@ -160,7 +183,8 @@ function calculateWin(reels: SymbolKey[][], bet: number): { win: number; lines: 
 export default function SolanaReels() {
   // Wallet State (100% Real)
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number>(0);
+  const [balance, setBalance] = useState<number>(0); // SOL balance
+  const [tokenBalance, setTokenBalance] = useState<number>(0); // $MEMETORRENT balance
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletProvider, setWalletProvider] = useState<any>(null); // For signing real transactions
 
@@ -177,6 +201,53 @@ export default function SolanaReels() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPaytable, setShowPaytable] = useState(false);
   const [isSendingBet, setIsSendingBet] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('MEMETORRENT'); // Default to their token
+  const [autoSpin, setAutoSpin] = useState(false);
+  const [autoSpinCount, setAutoSpinCount] = useState(0);
+
+  // Progression System (persisted)
+  const [level, setLevel] = useState(1);
+  const [xp, setXp] = useState(0);
+  const [totalSpins, setTotalSpins] = useState(0);
+  const [winStreak, setWinStreak] = useState(0);
+  const [achievements, setAchievements] = useState<string[]>([]);
+
+  // Load progression from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('lucky-reels-progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setLevel(data.level || 1);
+      setXp(data.xp || 0);
+      setTotalSpins(data.totalSpins || 0);
+      setWinStreak(data.winStreak || 0);
+      setAchievements(data.achievements || []);
+    }
+  }, []);
+
+  const saveProgress = (newLevel?: number, newXp?: number, newTotalSpins?: number, newWinStreak?: number, newAchievements?: string[]) => {
+    const progress = {
+      level: newLevel ?? level,
+      xp: newXp ?? xp,
+      totalSpins: newTotalSpins ?? totalSpins,
+      winStreak: newWinStreak ?? winStreak,
+      achievements: newAchievements ?? achievements,
+    };
+    localStorage.setItem('lucky-reels-progress', JSON.stringify(progress));
+  };
+
+  // Auto Spin Logic
+  useEffect(() => {
+    if (autoSpin && autoSpinCount > 0 && !isSpinning && !isSendingBet) {
+      const timer = setTimeout(() => {
+        spin().then(() => {
+          setAutoSpinCount(prev => Math.max(0, prev - 1));
+          if (autoSpinCount <= 1) setAutoSpin(false);
+        });
+      }, 1200); // slight delay between auto spins
+      return () => clearTimeout(timer);
+    }
+  }, [autoSpin, autoSpinCount, isSpinning, isSendingBet]);
 
   // Audio Context for perfect sound
   const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
@@ -322,14 +393,36 @@ export default function SolanaReels() {
     toast.info('Wallet disconnected');
   };
 
-  // Refresh real balance
+  // Refresh real balances (SOL + $MEMETORRENT)
   const refreshBalance = async () => {
     if (!walletAddress) return;
     try {
-      const lamports = await CONNECTION.getBalance(new PublicKey(walletAddress));
+      const pubkey = new PublicKey(walletAddress);
+      const lamports = await CONNECTION.getBalance(pubkey);
       setBalance(lamports / LAMPORTS_PER_SOL);
+
+      // Fetch $MEMETORRENT token balance
+      await refreshTokenBalance(pubkey);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const refreshTokenBalance = async (pubkey: PublicKey) => {
+    try {
+      const tokenAccounts = await CONNECTION.getParsedTokenAccountsByOwner(pubkey, {
+        mint: MEMETORRENT_MINT,
+      });
+
+      if (tokenAccounts.value.length > 0) {
+        const amount = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+        setTokenBalance(amount);
+      } else {
+        setTokenBalance(0);
+      }
+    } catch (e) {
+      console.error('Error fetching token balance:', e);
+      setTokenBalance(0);
     }
   };
 
@@ -344,9 +437,10 @@ export default function SolanaReels() {
       return;
     }
 
-    if (balance < bet) {
-      toast.error('Insufficient on-chain balance', {
-        description: `You need at least ${bet} SOL in your wallet`
+    const currentBalance = selectedCurrency === 'SOL' ? balance : tokenBalance;
+    if (currentBalance < bet) {
+      toast.error(`Insufficient ${selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL} balance`, {
+        description: `You need at least ${bet} ${selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL} to spin`
       });
       return;
     }
@@ -355,45 +449,72 @@ export default function SolanaReels() {
 
     try {
       const userPubkey = new PublicKey(walletAddress);
-      const lamports = Math.floor(bet * LAMPORTS_PER_SOL);
+      let signature: string;
 
-      // Build real transfer transaction to House
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: userPubkey,
-          toPubkey: HOUSE_WALLET,
-          lamports,
-        })
-      );
+      if (selectedCurrency === 'SOL') {
+        // SOL Betting - Real transfer
+        const lamports = Math.floor(bet * LAMPORTS_PER_SOL);
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: userPubkey,
+            toPubkey: HOUSE_WALLET,
+            lamports,
+          })
+        );
+        const { blockhash } = await CONNECTION.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = userPubkey;
 
-      // Get recent blockhash
-      const { blockhash } = await CONNECTION.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = userPubkey;
+        const signedTx = await walletProvider.signAndSendTransaction(transaction);
+        signature = signedTx.signature;
+        await CONNECTION.confirmTransaction(signature, 'confirmed');
 
-      // Ask the real wallet to sign and send
-      const signedTx = await walletProvider.signAndSendTransaction(transaction);
-      const signature = signedTx.signature;
+        toast.success('Bet placed in SOL', {
+          description: `Tx: ${signature.slice(0, 8)}...`,
+        });
+      } else {
+        // $MEMETORRENT Betting - Real SPL transfer
+        const decimals = 6;
+        const tokenAmount = Math.floor(bet * Math.pow(10, decimals));
 
-      // Wait for confirmation on Devnet
-      await CONNECTION.confirmTransaction(signature, 'confirmed');
+        const userAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, userPubkey);
+        const houseAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, HOUSE_WALLET);
 
-      toast.success('Bet placed on-chain', {
-        description: `Tx: ${signature.slice(0, 8)}...`,
-      });
+        const transaction = new Transaction().add(
+          createTransferInstruction(
+            userAta,
+            houseAta,
+            userPubkey,
+            tokenAmount
+          )
+        );
 
-      // Now proceed with the spin (client-side fair result for this prototype)
+        const { blockhash } = await CONNECTION.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = userPubkey;
+
+        const signedTx = await walletProvider.signAndSendTransaction(transaction);
+        signature = signedTx.signature;
+        await CONNECTION.confirmTransaction(signature, 'confirmed');
+
+        toast.success(`Bet placed in ${TOKEN_SYMBOL}`, {
+          description: `Tx: ${signature.slice(0, 8)}...`,
+        });
+      }
+
+      // Now proceed with the spin
       setIsSendingBet(false);
       setIsSpinning(true);
       playSound('spin');
 
       const seed = generateSeed();
 
+      const useTokenBonus = selectedCurrency === 'MEMETORRENT';
       const newReels: SymbolKey[][] = Array.from({ length: 5 }, (_, reelIndex) => {
-        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex]));
+        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex], useTokenBonus));
       });
 
-      const { win, lines, mult } = calculateWin(newReels, bet);
+      const { win, lines } = calculateWin(newReels, bet);
 
       const spinDuration = 1450;
       const delays = [0, 180, 340, 510, 680];
@@ -408,19 +529,68 @@ export default function SolanaReels() {
       await new Promise(resolve => setTimeout(resolve, spinDuration + 420));
 
       const finalWin = Math.round(win * 100) / 100;
+      const currencyLabel = selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL;
+
+      // Streak bonus calculation (for $MEMETORRENT)
+      let finalDisplayedWin = finalWin;
+      if (selectedCurrency === 'MEMETORRENT' && winStreak >= 3) {
+        const streakMult = 1 + Math.min(winStreak * 0.05, 0.5);
+        finalDisplayedWin = Math.round(finalWin * streakMult * 100) / 100;
+      }
 
       setReels(newReels);
       setWinningLines(lines);
-      setLastWin(finalWin);
+      setLastWin(finalDisplayedWin);
 
-      // Credit winnings to local session balance (prototype limitation)
-      const newSession = Math.round((sessionBalance + finalWin) * 100) / 100;
+      // Credit winnings (use streak-adjusted amount when applicable)
+      const newSession = Math.round((sessionBalance + finalDisplayedWin) * 100) / 100;
       setSessionBalance(Math.max(0, newSession));
 
-      // Update real on-chain balance after the bet tx
+      // === PROGRESSION SYSTEM ===
+      const newTotalSpins = totalSpins + 1;
+      const xpGained = Math.floor(bet * (selectedCurrency === 'MEMETORRENT' ? 12 : 10)); // Bonus XP for using their token
+      const newXp = xp + xpGained;
+      const newLevel = Math.floor(newXp / 100) + 1;
+      const leveledUp = newLevel > level;
+
+      let newWinStreak = finalWin > 0 ? winStreak + 1 : 0;
+      let newAchievements = [...achievements];
+
+      // Level up rewards
+      if (leveledUp) {
+        const bonus = newLevel * 0.5;
+        setSessionBalance(prev => prev + bonus);
+        toast.success(`Level Up! Reached Level ${newLevel}`, {
+          description: `+${bonus} ${currencyLabel} bonus!`,
+        });
+      }
+
+      // Achievements
+      if (newTotalSpins === 10 && !newAchievements.includes('First 10 Spins')) {
+        newAchievements.push('First 10 Spins');
+        toast.success('Achievement Unlocked: First 10 Spins');
+      }
+      if (newWinStreak === 5 && !newAchievements.includes('Hot Streak')) {
+        newAchievements.push('Hot Streak');
+        toast.success('Achievement Unlocked: 5 Win Streak!');
+      }
+      if (finalWin > 10 && !newAchievements.includes('Big Winner')) {
+        newAchievements.push('Big Winner');
+        toast.success('Achievement Unlocked: Big Win!');
+      }
+
+      // Save progression
+      setTotalSpins(newTotalSpins);
+      setXp(newXp);
+      setLevel(newLevel);
+      setWinStreak(newWinStreak);
+      setAchievements(newAchievements);
+      saveProgress(newLevel, newXp, newTotalSpins, newWinStreak, newAchievements);
+
+      // Update on-chain balances
       await refreshBalance();
 
-      // History with real tx signature
+      // History
       const historyEntry: SpinHistory = {
         timestamp: new Date().toISOString(),
         bet,
@@ -450,8 +620,12 @@ export default function SolanaReels() {
           playSound('win');
         }
 
-        toast.success(`You won ${finalWin.toFixed(2)} SOL!`, {
-          description: `${lines.length} line${lines.length !== 1 ? 's' : ''} • ${mult > 1 ? `${mult}× multiplier` : ''}`,
+        const extraText = selectedCurrency === 'MEMETORRENT' && winStreak >= 3 
+          ? ` • ${winStreak}x Streak Bonus!` 
+          : '';
+
+        toast.success(`You won ${finalWin.toFixed(2)} ${currencyLabel}!`, {
+          description: `${lines.length} line${lines.length !== 1 ? 's' : ''} • +${xpGained} XP${extraText}`,
         });
       } else {
         playSound('click');
@@ -480,7 +654,7 @@ export default function SolanaReels() {
 
   const fundDemoBalance = (amount: number) => {
     setSessionBalance(prev => Math.round((prev + amount) * 100) / 100);
-    toast.success(`Added ${amount} SOL to demo balance`);
+    toast.success(`Added ${amount} ${TOKEN_SYMBOL} to demo balance`);
   };
 
   // ==================== RENDER ====================
@@ -530,7 +704,7 @@ export default function SolanaReels() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="text-xs text-[#8a8a94] mr-1 hidden sm:block">Connect to bet real SOL:</div>
+                <div className="text-xs text-[#8a8a94] mr-1 hidden sm:block">Connect to bet {TOKEN_SYMBOL}:</div>
                 {(['phantom', 'solflare', 'backpack'] as const).map((w) => (
                   <button
                     key={w}
@@ -552,7 +726,7 @@ export default function SolanaReels() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#1f1f26] text-xs tracking-[2px] text-[#d4af37] mb-4 border border-[#33333a]">
-            DEVNET • REAL ON-CHAIN BETS
+            DEVNET • REAL ON-CHAIN BETS • LIVE
           </div>
           <h1 className="font-display text-7xl font-bold tracking-[-4.5px] text-white mb-2">SOLANA REELS</h1>
           <p className="text-[#8a8a94] text-xl">Premium slot machine with real Solana transactions</p>
@@ -610,7 +784,24 @@ export default function SolanaReels() {
               {/* Controls */}
               <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <div className="text-xs tracking-widest text-[#8a8a94] mb-2">BET AMOUNT</div>
+                  <div className="text-xs tracking-widest text-[#8a8a94] mb-2 flex items-center justify-between">
+                    BET AMOUNT
+                    {/* Currency Selector */}
+                    <div className="flex rounded-lg overflow-hidden border border-[#33333a] text-xs">
+                      <button
+                        onClick={() => setSelectedCurrency('MEMETORRENT')}
+                        className={`px-2 py-0.5 ${selectedCurrency === 'MEMETORRENT' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
+                      >
+                        {TOKEN_SYMBOL}
+                      </button>
+                      <button
+                        onClick={() => setSelectedCurrency('SOL')}
+                        className={`px-2 py-0.5 ${selectedCurrency === 'SOL' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
+                      >
+                        SOL
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-3">
                     <button 
                       onClick={() => adjustBet(-1)} 
@@ -620,9 +811,15 @@ export default function SolanaReels() {
                       <Minus size={18} />
                     </button>
                     
-                    <div className="px-8 py-3 bg-[#1a1a22] rounded-3xl border border-[#33333a] min-w-[148px] text-center">
+                    <div className="px-8 py-3 bg-[#1a1a22] rounded-3xl border border-[#33333a] min-w-[148px] text-center relative">
                       <span className="font-mono text-4xl font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
-                      <span className="ml-1.5 text-[#8a8a94]">SOL</span>
+                      <span className="ml-1.5 text-[#8a8a94]">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
+                      
+                      {selectedCurrency === 'MEMETORRENT' && (
+                        <div className="absolute -top-2 -right-2 bg-[#14f195] text-[#0a0a0f] text-[9px] px-1.5 py-0.5 rounded-full font-bold">
+                          +25% RTP
+                        </div>
+                      )}
                     </div>
 
                     <button 
@@ -641,7 +838,7 @@ export default function SolanaReels() {
                   className="btn-gold text-xl px-16 py-5 rounded-3xl flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all"
                 >
                   <Play className="w-6 h-6" /> 
-                  {isSendingBet ? 'SENDING BET ON-CHAIN...' : isSpinning ? 'SPINNING...' : 'SPIN (REAL TX)'}
+                  {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : `SPIN WITH ${TOKEN_SYMBOL}`}
                 </button>
 
                 <button 
@@ -650,6 +847,18 @@ export default function SolanaReels() {
                 >
                   <Trophy size={17} /> PAYTABLE
                 </button>
+
+                {/* Auto Spin Toggle */}
+                <button
+                  onClick={() => {
+                    const newAuto = !autoSpin;
+                    setAutoSpin(newAuto);
+                    if (newAuto) setAutoSpinCount(25); // 25 spins default
+                  }}
+                  className={`px-4 py-4 rounded-2xl border text-sm font-medium ${autoSpin ? 'border-[#9945ff] bg-[#9945ff]/10' : 'border-[#33333a] hover:bg-[#1f1f26]'}`}
+                >
+                  {autoSpin ? `AUTO (${autoSpinCount})` : 'AUTO 25'}
+                </button>
               </div>
             </div>
 
@@ -657,8 +866,8 @@ export default function SolanaReels() {
             <div className="mt-4 px-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-[#8a8a94]">
-                  Winnings Balance
-                  <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{sessionBalance.toFixed(2)}</span> SOL
+                  {TOKEN_NAME} Balance
+                  <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{tokenBalance.toFixed(2)}</span>
                 </div>
                 <div className="flex gap-2">
                   {[1, 2, 5].map(a => (
@@ -669,24 +878,23 @@ export default function SolanaReels() {
                 </div>
               </div>
 
-              {/* Real Betting Info - Prominent */}
-              <div className="mt-3 p-3 rounded-2xl bg-[#1a1a22] border border-[#33333a] text-xs">
+              {/* Buy & Real Betting Info */}
+              <div className="mt-3 p-3 rounded-2xl bg-[#1a1a22] border border-[#33333a] text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[#d4af37] font-medium">Real on-chain bets</span> on Devnet
+                    <span className="text-[#d4af37] font-medium">Bet with {TOKEN_NAME}</span>
                   </div>
-                  <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(HOUSE_WALLET.toBase58());
-                      toast.success('House address copied');
-                    }}
-                    className="px-2 py-0.5 text-[10px] rounded bg-[#25252d] hover:bg-[#33333a] font-mono"
+                  <a 
+                    href={`https://jup.ag/swap/SOL-${MEMETORRENT_MINT.toBase58()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 text-[10px] rounded bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
                   >
-                    Copy House
-                  </button>
+                    Buy {TOKEN_SYMBOL}
+                  </a>
                 </div>
-                <div className="font-mono text-[#8a8a94] mt-1 text-[10px] break-all">
-                  {HOUSE_WALLET.toBase58()}
+                <div className="text-[#8a8a94]">
+                  Your bets in {TOKEN_SYMBOL} are sent on-chain to the House.
                 </div>
               </div>
             </div>
@@ -751,13 +959,70 @@ export default function SolanaReels() {
                 Bets are sent as real Devnet transactions. Seeds prove the spin result was fair.
               </div>
             </div>
+
+            {/* Levels, Bonuses & Features */}
+            <div className="bg-[#111115] border border-[#222228] rounded-3xl p-6 mt-6">
+              <div className="uppercase text-xs tracking-[1.5px] text-[#8a8a94] mb-3">PROGRESS &amp; BONUSES</div>
+
+              <div className="space-y-4 text-sm">
+                {/* Level System */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="font-medium">Level {level}</div>
+                    <div className="text-[#8a8a94] text-xs">{xp % 100}/100 XP</div>
+                  </div>
+                  <div className="h-2 bg-[#1f1f26] rounded-full overflow-hidden">
+                    <div className="h-2 bg-[#d4af37]" style={{ width: `${(xp % 100)}%` }}></div>
+                  </div>
+                  <div className="text-xs text-[#8a8a94] mt-1">+{selectedCurrency === 'MEMETORRENT' ? '20%' : '0%'} XP bonus when betting with {TOKEN_SYMBOL}</div>
+                </div>
+
+                {/* Win Streak */}
+                <div className="flex justify-between">
+                  <div>Win Streak</div>
+                  <div className="font-mono text-[#d4af37]">{winStreak} 🔥</div>
+                </div>
+
+                {/* Simple Daily Bonus */}
+                <button 
+                  onClick={() => {
+                    const lastBonus = localStorage.getItem('last-daily-bonus');
+                    const now = Date.now();
+                    if (lastBonus && now - parseInt(lastBonus) < 24 * 60 * 60 * 1000) {
+                      toast.error('Daily bonus already claimed');
+                      return;
+                    }
+                    const bonus = 2 + (level * 0.5);
+                    setSessionBalance(prev => prev + bonus);
+                    localStorage.setItem('last-daily-bonus', now.toString());
+                    toast.success(`Daily Bonus! +${bonus.toFixed(1)} ${selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL}`);
+                  }}
+                  className="w-full py-2 rounded-xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-sm font-medium"
+                >
+                  Claim Daily Bonus (+{2 + (level * 0.5)} {selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL})
+                </button>
+
+                {/* Achievements */}
+                {achievements.length > 0 && (
+                  <div>
+                    <div className="text-xs text-[#8a8a94] mb-1">Achievements ({achievements.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {achievements.map((a, i) => (
+                        <div key={i} className="text-[10px] px-2 py-0.5 bg-[#1a1a22] rounded border border-[#33333a]">{a}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Footer Note */}
         <div className="mt-12 text-center text-xs text-[#8a8a94] max-w-md mx-auto leading-relaxed">
-          <strong>Real on-chain betting enabled on Devnet.</strong> Your bet is sent as a real transaction to the House address before the spin. 
-          Winnings are credited locally in this prototype. Full production version requires an audited program + VRF.
+          <strong>⚠️ Real on-chain bets on Devnet.</strong> You are sending actual SOL. 
+          Winnings credited locally (prototype). Use only test funds. 
+          <a href="https://github.com/Futuret3chdev/lucky-reels" target="_blank" rel="noopener" className="text-[#9945ff] hover:underline">View on GitHub</a>
         </div>
       </div>
 
