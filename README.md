@@ -152,14 +152,13 @@ Clear messaging throughout the UI reinforces that buying and betting with $MEMET
 
 ---
 
-## Important: You Still Need Some SOL for Fees
+## Important: Treasury vs Your Wallet + Multiple Phantom Accounts
 
-Even when betting with **$MEMETORRENT**, every transaction on Solana requires a small amount of SOL (~0.000005–0.00001 SOL) to pay network fees.
+- The address `35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD` is the **official MT Ecosystem treasury**. It is only ever the **recipient** of $MEMETORRENT bets. It is **never** used as a player's connected wallet.
+- Players can connect **any account** from Phantom (even if they have 10+ accounts). The dApp supports switching accounts and full disconnect/reconnect.
+- We now listen to Phantom's `accountChanged` and `disconnect` events so the UI updates correctly when users switch wallets inside Phantom.
 
-If a user has 835 $MEMETORRENT but 0 SOL, they will see:
-> "You don't have enough SOL for this transaction"
-
-The app now shows clear warnings in the UI when SOL balance is too low for fees while betting with the token.
+This confusion usually comes from Phantom showing the treasury address as the "to" field in the confirmation popup (which is expected and correct behavior for a token transfer).
 
 ### Netlify
 1. Push to GitHub

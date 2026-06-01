@@ -199,7 +199,6 @@ export default function SolanaReels() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0); // SOL balance
   const [tokenBalance, setTokenBalance] = useState<number>(0); // $MT balance
-  const [isLoadingTokenBalance, setIsLoadingTokenBalance] = useState(false);
 
   // Rockets - P2E cross-game currency (separate from $MT balance)
   const [rockets, setRockets] = useState<number>(0);
@@ -400,6 +399,32 @@ export default function SolanaReels() {
         }
       }, 1200);
 
+      // Listen for account changes or disconnects from the wallet (important for users with multiple accounts)
+      if (provider?.on) {
+        const handleAccountChanged = (newPublicKey: any) => {
+          if (newPublicKey) {
+            const newKey = newPublicKey.toString();
+            setWalletAddress(newKey);
+            const newPub = new PublicKey(newKey);
+            CONNECTION.getBalance(newPub).then(lamports => setBalance(lamports / LAMPORTS_PER_SOL));
+            refreshTokenBalance(newPub);
+            toast.info('Account changed', { description: newKey.slice(0,4) + '...' + newKey.slice(-4) });
+          } else {
+            // User disconnected from within Phantom
+            disconnectWallet();
+          }
+        };
+
+        const handleDisconnect = () => {
+          disconnectWallet();
+        };
+
+        provider.on('accountChanged', handleAccountChanged);
+        provider.on('disconnect', handleDisconnect);
+
+        // Store cleanup function if needed (simple approach: we can ignore for now)
+      }
+
       toast.success(`Connected to ${walletType.charAt(0).toUpperCase() + walletType.slice(1)}`, {
         description: publicKey.slice(0, 4) + '...' + publicKey.slice(-4),
       });
@@ -414,10 +439,27 @@ export default function SolanaReels() {
     }
   };
 
-  const disconnectWallet = () => {
+  const disconnectWallet = async () => {
+    try {
+      // Properly disconnect from the wallet provider if it supports it
+      if (walletProvider?.disconnect) {
+        await walletProvider.disconnect();
+      }
+      // Some wallets (like Phantom) expose a disconnect method on the provider
+      if (walletProvider?.isPhantom && walletProvider?.disconnect) {
+        await walletProvider.disconnect();
+      }
+    } catch (e) {
+      // Ignore disconnect errors
+    }
+
     setWalletAddress(null);
     setBalance(0);
+    setTokenBalance(0);
     setWalletProvider(null);
+    setRockets(0);
+    setSessionBalance(5.0); // reset demo balance on disconnect for cleanliness
+
     toast.info('Wallet disconnected');
   };
 
@@ -1020,8 +1062,8 @@ export default function SolanaReels() {
                 </a>
 
                 <div className="text-[#8a8a94] text-center">
-                  All {TOKEN_SYMBOL} bets go directly to the <span className="text-[#d4af37]">MT Ecosystem treasury</span> from <span className="font-mono">your wallet</span>.<br />
-                  Buying {TOKEN_SYMBOL} helps fund the entire MT game network.
+                  All {TOKEN_SYMBOL} bets are sent <strong>from your connected wallet</strong> to the <span className="text-[#d4af37]">MT Ecosystem treasury</span>.<br />
+                  The treasury address is only the destination — it is never used as your playing wallet.
                 </div>
               </div>
             </div>
@@ -1043,7 +1085,7 @@ export default function SolanaReels() {
                 </div>
               ) : (
                 <div className="text-[#8a8a94] text-sm">
-                  Connect a real wallet to place <span className="text-white">actual on-chain bets</span> (SOL is transferred to the House before every spin).
+                  Connect any account from your wallet. You can safely switch accounts inside Phantom and reconnect here anytime.
                 </div>
               )}
             </div>
