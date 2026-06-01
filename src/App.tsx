@@ -73,8 +73,14 @@ const REEL_STRIPS: SymbolKey[][] = [
 
 // ==================== CONFIG ====================
 const BET_AMOUNTS = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0];
-// Mainnet connection (the $MEMETORRENT token only exists on mainnet-beta)
-const CONNECTION = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+// Solana RPC URL
+// Uses VITE_SOLANA_RPC_URL from environment variables (recommended for production).
+// Falls back to public mainnet RPC if not set (can cause 403 errors).
+const SOLANA_RPC_URL =
+  import.meta.env.VITE_SOLANA_RPC_URL ||
+  'https://api.mainnet-beta.solana.com';
+
+const CONNECTION = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 // House wallet for prototype real betting (visible in UI)
 // In production this would be a PDA controlled by an audited program.
@@ -404,8 +410,21 @@ export default function SolanaReels() {
 
       // Fetch $MEMETORRENT token balance
       await refreshTokenBalance(pubkey);
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('Failed to fetch wallet balances:', e);
+      
+      // Show user-friendly error for common RPC issues
+      if (e?.message?.includes('403') || e?.message?.includes('Access forbidden')) {
+        toast.error('RPC 403 Error', {
+          description: 'Add your Helius key as VITE_SOLANA_RPC_URL in Vercel Environment Variables, then redeploy.',
+          duration: 10000,
+        });
+      } else if (e?.message?.includes('could not find mint')) {
+        toast.error('Token not found on this network', {
+          description: 'Make sure you are on Mainnet and the token mint is correct.',
+          duration: 8000,
+        });
+      }
     }
   };
 
@@ -422,8 +441,10 @@ export default function SolanaReels() {
         setTokenBalance(0); // User has no token account yet
       }
     } catch (e: any) {
-      // This commonly happens if the user has no ATA for this mint yet
-      console.warn('Could not fetch $MEMETORRENT balance (user may not have the token yet):', e?.message || e);
+      // This commonly happens if the user has no ATA for this mint yet, or RPC issues
+      if (!e?.message?.includes('could not find mint')) {
+        console.warn('Token balance fetch issue:', e?.message || e);
+      }
       setTokenBalance(0);
     }
   };
@@ -729,6 +750,24 @@ export default function SolanaReels() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#1f1f26] text-xs tracking-[2px] text-[#d4af37] mb-4 border border-[#33333a]">
             MAINNET • REAL ON-CHAIN BETS • LIVE
+            {import.meta.env.VITE_SOLANA_RPC_URL ? (
+              <button
+                onClick={() => {
+                  const url = import.meta.env.VITE_SOLANA_RPC_URL;
+                  const masked = url.includes('?api-key=') 
+                    ? url.split('?api-key=')[0] + '?api-key=••••••••'
+                    : url;
+                  toast.info('Current RPC', { description: masked });
+                }}
+                className="ml-2 px-2 py-0.5 rounded-full bg-[#14f195] text-[#0a0a0f] text-[10px] font-bold hover:bg-[#0f9f6e] transition-colors"
+              >
+                {import.meta.env.VITE_SOLANA_RPC_URL.includes('helius') ? 'Helius' : 'Custom RPC'}
+              </button>
+            ) : (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-[#fbbf24] text-[#0a0a0f] text-[10px] font-bold">
+                Public RPC
+              </span>
+            )}
           </div>
           <h1 className="font-display text-7xl font-bold tracking-[-4.5px] text-white mb-2">SOLANA REELS</h1>
           <p className="text-[#8a8a94] text-xl">Premium slot machine with real Solana transactions</p>
