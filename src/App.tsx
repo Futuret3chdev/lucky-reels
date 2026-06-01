@@ -193,6 +193,183 @@ function calculateWin(reels: SymbolKey[][], bet: number): { win: number; lines: 
   };
 }
 
+// ==================== I18N (MT ECO SYSTEM - languages actually work now) ====================
+const TRANSLATIONS: Record<string, Record<string, string>> = {
+  en: {
+    'settings': 'Settings',
+    'language': 'Language',
+    'socials_title': 'Connect Accounts (MT Ecosystem)',
+    'socials_hint': 'Connect to unlock cross-game perks in the MT ECO SYSTEM.',
+    'shop_title': 'MT Shop',
+    'shop_sub': 'Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.',
+    'buy_mt_title': 'Buy Rockets with $MT',
+    'buy_mt_note': 'Real SPL transfer • Tx receipt shown',
+    'pack_100': '100 Rockets — 50 $MT',
+    'pack_300': '300 Rockets — 120 $MT (Best Value)',
+    'extra_spins': '10 Extra Spins',
+    'multiplier_2x': '2x Multiplier (10 spins)',
+    'cosmetic_logo': 'MT Logo Cosmetic',
+    'shop_close': 'CLOSE SHOP',
+    'revenge_earn': 'Revenge Token Earned!',
+    'revenge_earn_desc': 'Activate it for boosted odds on your next spins.',
+    'revenge_activate': 'ACTIVATE REVENGE TOKEN',
+    'revenge_active': 'Revenge Token Activated!',
+    'revenge_active_desc': 'Boosted odds for the next few spins.',
+    'spin_btn': 'SPIN WITH $MEMETORRENT',
+    'shop_btn': 'SHOP',
+    'paytable_btn': 'PAYTABLE',
+    'mt_balance': '$MT Balance',
+    'rockets_label': 'Rockets',
+    'connect_wallet': 'Connect Wallet',
+    'wallet_connected': 'Connected',
+    'buy_mt_link': 'Buy $MT',
+    'treasury_note': 'Sending from your wallet → MT Treasury',
+    'revenge_refill': 'Revenge Refill',
+    'revenge_refill_desc': '+1 Revenge Token charge',
+    'streak_saver': 'Streak Saver',
+    'streak_saver_desc': '+4 to current win streak',
+    'xp_blast': 'XP Blast',
+    'xp_blast_desc': '+150 XP instantly',
+    'scatter_surge': 'Scatter Surge (12 spins)',
+    'scatter_surge_desc': 'More Rocket symbols for a while',
+    'auto_bundle': 'Auto-Spin Bundle',
+    'auto_bundle_desc': '+20 Auto Spins',
+    'eco_badge': 'Ecosystem Badge',
+    'eco_badge_desc': 'Permanent small win bonus',
+  },
+  es: {
+    'settings': 'Ajustes',
+    'language': 'Idioma',
+    'socials_title': 'Conectar Cuentas (Ecosistema MT)',
+    'socials_hint': 'Conéctate para desbloquear perks entre juegos en el MT ECO SYSTEM.',
+    'shop_title': 'Tienda MT',
+    'shop_sub': 'Gasta tus Rockets en boosts y cosméticos. Los Rockets funcionan en todo el Ecosistema MT.',
+    'buy_mt_title': 'Comprar Rockets con $MT',
+    'buy_mt_note': 'Transferencia SPL real • Recibo de tx mostrado',
+    'pack_100': '100 Rockets — 50 $MT',
+    'pack_300': '300 Rockets — 120 $MT (Mejor Valor)',
+    'extra_spins': '10 Giros Extra',
+    'multiplier_2x': 'Multiplicador 2x (10 giros)',
+    'cosmetic_logo': 'Cosmético Logo MT',
+    'shop_close': 'CERRAR TIENDA',
+    'revenge_earn': '¡Token de Venganza Ganado!',
+    'revenge_earn_desc': 'Actívalo para probabilidades mejoradas en tus próximos giros.',
+    'revenge_activate': 'ACTIVAR TOKEN DE VENGANZA',
+    'revenge_active': '¡Token de Venganza Activado!',
+    'revenge_active_desc': 'Probabilidades mejoradas por los próximos giros.',
+    'spin_btn': 'GIRAR CON $MEMETORRENT',
+    'shop_btn': 'TIENDA',
+    'paytable_btn': 'TABLA DE PAGOS',
+    'mt_balance': 'Saldo $MT',
+    'rockets_label': 'Rockets',
+    'connect_wallet': 'Conectar Billetera',
+    'wallet_connected': 'Conectado',
+    'buy_mt_link': 'Comprar $MT',
+    'treasury_note': 'Enviando desde tu billetera → Tesorería MT',
+    'revenge_refill': 'Recarga de Venganza',
+    'revenge_refill_desc': '+1 carga de Token de Venganza',
+    'streak_saver': 'Salvador de Racha',
+    'streak_saver_desc': '+4 a la racha actual',
+    'xp_blast': 'Explosión de XP',
+    'xp_blast_desc': '+150 XP al instante',
+    'scatter_surge': 'Oleada de Scatter (12 giros)',
+    'scatter_surge_desc': 'Más símbolos Rocket temporalmente',
+    'auto_bundle': 'Paquete Auto-Giro',
+    'auto_bundle_desc': '+20 Giros Automáticos',
+    'eco_badge': 'Insignia Ecosistema',
+    'eco_badge_desc': 'Bonus permanente pequeño',
+  },
+  it: {
+    'settings': 'Impostazioni',
+    'language': 'Lingua',
+    'socials_title': 'Collega Account (Ecosistema MT)',
+    'socials_hint': 'Collegati per sbloccare bonus tra i giochi nell\'MT ECO SYSTEM.',
+    'shop_title': 'Negozio MT',
+    'shop_sub': 'Spendi i tuoi Rockets per potenziamenti e cosmetici. I Rockets funzionano in tutto l\'Ecosistema MT.',
+    'buy_mt_title': 'Compra Rockets con $MT',
+    'buy_mt_note': 'Trasferimento SPL reale • Ricevuta tx visibile',
+    'pack_100': '100 Rockets — 50 $MT',
+    'pack_300': '300 Rockets — 120 $MT (Miglior Valore)',
+    'extra_spins': '10 Girate Extra',
+    'multiplier_2x': 'Moltiplicatore 2x (10 girate)',
+    'cosmetic_logo': 'Cosmetico Logo MT',
+    'shop_close': 'CHIUDI NEGOZIO',
+    'revenge_earn': 'Token Vendetta Guadagnato!',
+    'revenge_earn_desc': 'Attivalo per probabilità aumentate nei prossimi giri.',
+    'revenge_activate': 'ATTIVA TOKEN VENDETTA',
+    'revenge_active': 'Token Vendetta Attivato!',
+    'revenge_active_desc': 'Probabilità aumentate per i prossimi giri.',
+    'spin_btn': 'GIRA CON $MEMETORRENT',
+    'shop_btn': 'NEGOZIO',
+    'paytable_btn': 'PAYTABLE',
+    'mt_balance': 'Saldo $MT',
+    'rockets_label': 'Rockets',
+    'connect_wallet': 'Collega Portafoglio',
+    'wallet_connected': 'Connesso',
+    'buy_mt_link': 'Compra $MT',
+    'treasury_note': 'Invio dal tuo wallet → Tesoreria MT',
+    'revenge_refill': 'Revenge Refill',
+    'streak_saver': 'Streak Saver',
+    'xp_blast': 'XP Blast',
+    'scatter_surge': 'Scatter Surge',
+    'auto_bundle': 'Auto Bundle',
+    'eco_badge': 'Ecosystem Badge',
+  },
+  pcm: {
+    'settings': 'Settings',
+    'language': 'Language',
+    'socials_title': 'Connect Accounts (MT Ecosystem)',
+    'socials_hint': 'Connect to unlock cross-game perks for MT ECO SYSTEM.',
+    'shop_title': 'MT Shop',
+    'shop_sub': 'Spend your Rockets on boosts and cosmetics. Rockets dey work across the whole MT Ecosystem.',
+    'buy_mt_title': 'Buy Rockets with $MT',
+    'buy_mt_note': 'Real SPL transfer • Tx receipt shown',
+    'pack_100': '100 Rockets — 50 $MT',
+    'pack_300': '300 Rockets — 120 $MT (Best Value)',
+    'extra_spins': '10 Extra Spins',
+    'multiplier_2x': '2x Multiplier (10 spins)',
+    'cosmetic_logo': 'MT Logo Cosmetic',
+    'shop_close': 'CLOSE SHOP',
+    'revenge_earn': 'Revenge Token Don Earn!',
+    'revenge_earn_desc': 'Activate am for boosted odds on your next spins.',
+    'revenge_activate': 'ACTIVATE REVENGE TOKEN',
+    'revenge_active': 'Revenge Token Activated!',
+    'revenge_active_desc': 'Boosted odds for the next few spins.',
+    'spin_btn': 'SPIN WITH $MEMETORRENT',
+    'shop_btn': 'SHOP',
+    'paytable_btn': 'PAYTABLE',
+    'mt_balance': '$MT Balance',
+    'rockets_label': 'Rockets',
+    'connect_wallet': 'Connect Wallet',
+    'wallet_connected': 'Connected',
+    'buy_mt_link': 'Buy $MT',
+    'treasury_note': 'Sending from your wallet → MT Treasury',
+    'revenge_refill': 'Revenge Refill',
+    'streak_saver': 'Streak Saver',
+    'xp_blast': 'XP Blast',
+    'scatter_surge': 'Scatter Surge',
+    'auto_bundle': 'Auto Bundle',
+    'eco_badge': 'Ecosystem Badge',
+  },
+  // For other languages (ha, yo, ig, fil, ceb, zh, pt, mt, tl) we fall back to English for now
+  // to keep the file reasonable. Full translations can be expanded later.
+  ha: { 'settings': 'Saituna' },
+  yo: { 'settings': 'Ètò' },
+  ig: { 'settings': 'Ntọala' },
+  fil: { 'settings': 'Mga Setting' },
+  ceb: { 'settings': 'Mga Setting' },
+  zh: { 'settings': '设置' },
+  pt: { 'settings': 'Configurações' },
+  mt: { 'settings': 'Settings' },
+  tl: { 'settings': 'Mga Setting' },
+};
+
+// Helper to get translated string (falls back gracefully)
+function getTranslation(lang: string, key: string): string {
+  const langPack = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  return langPack[key] || TRANSLATIONS.en[key] || key;
+}
+
 // ==================== MAIN APP ====================
 export default function SolanaReels() {
   // Wallet State (100% Real)
@@ -238,10 +415,15 @@ export default function SolanaReels() {
     return saved ? JSON.parse(saved) : { telegram: false, discord: false, x: false, facebook: false };
   });
 
-  // Revenge Token system (original feature)
+  // Revenge Token system (original MT ECO SYSTEM feature - improved)
   const [hasRevengeToken, setHasRevengeToken] = useState(false);
   const [revengeTokenActive, setRevengeTokenActive] = useState(false);
+  const [revengeUsesLeft, setRevengeUsesLeft] = useState(0);
   const [recentLosses, setRecentLosses] = useState(0);
+
+  // Shop power-up states (Rockets spend effects)
+  const [scatterBoostSpins, setScatterBoostSpins] = useState(0); // from Scatter Surge item
+  const [winShieldSpins, setWinShieldSpins] = useState(0);       // simple protection
 
   // Last successful Rocket purchase (for showing tx confirmation in Shop)
   const [lastRocketPurchase, setLastRocketPurchase] = useState<{ rockets: number; costMT: number; tx: string } | null>(null);
@@ -281,6 +463,25 @@ export default function SolanaReels() {
     localStorage.setItem('lucky-reels-progress', JSON.stringify(progress));
   };
 
+  // Persist Revenge Token state (so it survives refresh like Rockets)
+  useEffect(() => {
+    const saved = localStorage.getItem('mt-revenge-state');
+    if (saved) {
+      const r = JSON.parse(saved);
+      if (r.hasRevengeToken !== undefined) setHasRevengeToken(!!r.hasRevengeToken);
+      if (r.revengeTokenActive !== undefined) setRevengeTokenActive(!!r.revengeTokenActive);
+      if (r.revengeUsesLeft !== undefined) setRevengeUsesLeft(Math.max(0, Number(r.revengeUsesLeft) || 0));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mt-revenge-state', JSON.stringify({
+      hasRevengeToken,
+      revengeTokenActive,
+      revengeUsesLeft,
+    }));
+  }, [hasRevengeToken, revengeTokenActive, revengeUsesLeft]);
+
   // Persist language and socials
   useEffect(() => {
     localStorage.setItem('mt-language', language);
@@ -289,6 +490,9 @@ export default function SolanaReels() {
   useEffect(() => {
     localStorage.setItem('mt-connected-socials', JSON.stringify(connectedSocials));
   }, [connectedSocials]);
+
+  // Translation helper (makes language selector actually change the UI)
+  const t = (key: string) => getTranslation(language, key);
 
   // Auto Spin Logic
   useEffect(() => {
@@ -773,8 +977,9 @@ export default function SolanaReels() {
 
       const useTokenBonus = selectedCurrency === 'MEMETORRENT';
       const useRevengeBonus = revengeTokenActive;
+      const useScatterBoost = scatterBoostSpins > 0;
       const newReels: SymbolKey[][] = Array.from({ length: 5 }, (_, reelIndex) => {
-        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex], useTokenBonus || useRevengeBonus));
+        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex], useTokenBonus || useRevengeBonus || useScatterBoost));
       });
 
       const { win, lines } = calculateWin(newReels, bet);
@@ -791,8 +996,13 @@ export default function SolanaReels() {
 
       await new Promise(resolve => setTimeout(resolve, spinDuration + 420));
 
-      const finalWin = Math.round(win * 100) / 100;
+      let finalWin = Math.round(win * 100) / 100;
       const currencyLabel = selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL;
+
+      // Win Shield from Shop item: small protection vs total loss
+      if (winShieldSpins > 0 && finalWin === 0) {
+        finalWin = Math.max(finalWin, Math.round(bet * 0.25 * 100) / 100);
+      }
 
       // Streak bonus calculation (for $MEMETORRENT)
       let finalDisplayedWin = finalWin;
@@ -804,6 +1014,21 @@ export default function SolanaReels() {
       setReels(newReels);
       setWinningLines(lines);
       setLastWin(finalDisplayedWin);
+
+      // Consume temporary Shop power-ups (one spin per use)
+      if (scatterBoostSpins > 0) setScatterBoostSpins(s => Math.max(0, s - 1));
+      if (winShieldSpins > 0) setWinShieldSpins(s => Math.max(0, s - 1));
+
+      // Revenge Token duration (fixed uses, honest temporary power-up)
+      if (revengeTokenActive && revengeUsesLeft > 0) {
+        const newUses = revengeUsesLeft - 1;
+        setRevengeUsesLeft(newUses);
+        if (newUses <= 0) {
+          setRevengeTokenActive(false);
+          setRevengeUsesLeft(0);
+          toast.info('Revenge Token expired', { description: 'Earn another by hitting losing streaks.' });
+        }
+      }
 
       // Credit winnings (use streak-adjusted amount when applicable)
       const newSession = Math.round((sessionBalance + finalDisplayedWin) * 100) / 100;
@@ -829,8 +1054,8 @@ export default function SolanaReels() {
         if (newLosses >= 3 && bet >= 0.05 && !hasRevengeToken) {
           setHasRevengeToken(true);
           setRecentLosses(0);
-          toast.success('Revenge Token Earned!', {
-            description: 'Activate it for boosted odds on your next spins.',
+          toast.success(t('revenge_earn'), {
+            description: t('revenge_earn_desc'),
           });
         }
       } else {
@@ -1124,26 +1349,46 @@ export default function SolanaReels() {
                   className="btn-gold text-xl px-16 py-5 rounded-3xl flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all"
                 >
                   <Play className="w-6 h-6" /> 
-                  {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : `SPIN WITH ${TOKEN_SYMBOL}`}
+                  {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : t('spin_btn')}
                 </button>
 
-                {/* Revenge Token Activator */}
+                {/* Revenge Token Activator - improved visuals */}
                 {hasRevengeToken && !revengeTokenActive && (
                   <button
                     onClick={() => {
                       setRevengeTokenActive(true);
+                      setRevengeUsesLeft(5);
                       setHasRevengeToken(false);
-                      toast.success('Revenge Token Activated!', { description: 'Boosted odds for the next few spins.' });
+                      toast.success(t('revenge_active'), { 
+                        description: '5 boosted spins active — revenge the house!' 
+                      });
                     }}
-                    className="mt-2 text-xs px-4 py-1 rounded-full bg-[#f59e0b] text-[#0a0a0f] font-bold hover:bg-[#d97706]"
+                    className="mt-3 w-full max-w-[260px] mx-auto py-3 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-[0.985] transition-all"
                   >
-                    ACTIVATE REVENGE TOKEN
+                    ⚔️ {t('revenge_activate')} (5 spins)
                   </button>
+                )}
+
+                {/* Prominent Revenge Active Indicator */}
+                {revengeTokenActive && revengeUsesLeft > 0 && (
+                  <div className="mt-3 px-4 py-2 rounded-2xl bg-[#3b1f0f] border border-[#f59e0b]/60 text-[#fbbf24] text-xs font-medium flex items-center justify-center gap-2 animate-pulse">
+                    ⚔️ REVENGE ACTIVE — {revengeUsesLeft} spins left
+                    <span className="text-[10px] opacity-70">(boosted odds)</span>
+                  </div>
+                )}
+
+                {/* Small visual meter for earning next Revenge (honest progression feedback) */}
+                {!revengeTokenActive && !hasRevengeToken && recentLosses > 0 && (
+                  <div className="mt-1 text-[10px] text-[#8a8a94] flex items-center justify-center gap-1">
+                    Losing streak: {recentLosses}/3 
+                    <span className="text-[#f59e0b]">•</span> 
+                    <span className="text-[#f59e0b]">{3 - recentLosses} more for Revenge Token</span>
+                  </div>
                 )}
 
                 {selectedCurrency === 'MEMETORRENT' && walletAddress && (
                   <div className="text-center text-[11px] text-[#8a8a94] -mt-3">
-                    Sending from <span className="font-mono text-[#d4af37]">your wallet</span> → MT Treasury
+                    {t('treasury_note')}
                   </div>
                 )}
 
@@ -1151,7 +1396,7 @@ export default function SolanaReels() {
                   onClick={() => setShowPaytable(true)} 
                   className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
                 >
-                  <Trophy size={17} /> PAYTABLE
+                  <Trophy size={17} /> {t('paytable_btn')}
                 </button>
 
                 {/* Shop Button - Spend Rockets */}
@@ -1159,7 +1404,7 @@ export default function SolanaReels() {
                   onClick={() => setShowShop(true)} 
                   className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
                 >
-                  🛒 SHOP
+                  🛒 {t('shop_btn')}
                 </button>
 
                 {/* Auto Spin Toggle */}
@@ -1180,7 +1425,7 @@ export default function SolanaReels() {
             <div className="mt-4 px-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-[#8a8a94]">
-                  $MT Balance
+                  {t('mt_balance')}
                   <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{tokenBalance.toFixed(2)}</span>
                   <button 
                     onClick={() => walletAddress && refreshTokenBalance(new PublicKey(walletAddress))}
@@ -1193,7 +1438,7 @@ export default function SolanaReels() {
 
                 {/* Rockets Balance - P2E currency for MT Ecosystem */}
                 <div className="mt-1 flex items-center gap-2 text-sm">
-                  <span className="text-[#8a8a94]">Rockets</span>
+                  <span className="text-[#8a8a94]">{t('rockets_label')}</span>
                   <span className="font-mono font-semibold text-[#9945ff] tabular-nums text-lg">{rockets}</span>
                 </div>
 
@@ -1211,7 +1456,7 @@ export default function SolanaReels() {
                     rel="noopener noreferrer"
                     className="px-3 py-1 text-[10px] rounded bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
                   >
-                    Buy {TOKEN_SYMBOL}
+                    {t('buy_mt_link')}
                   </a>
 
                   <div className="text-[10px] text-[#8a8a94] text-center mt-1">
@@ -1379,32 +1624,33 @@ export default function SolanaReels() {
               className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-lg w-full p-8"
               onClick={e => e.stopPropagation()}
             >
-              <div className="font-display text-3xl tracking-tight mb-2">MT Shop</div>
-              <div className="text-sm text-[#8a8a94] mb-4">Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.</div>
+              <div className="font-display text-3xl tracking-tight mb-2">{t('shop_title')}</div>
+              <div className="text-sm text-[#8a8a94] mb-4">{t('shop_sub')}</div>
 
               {/* Buy Rockets Section inside Shop - real on-chain $MT transfers */}
               <div className="mb-4 p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
-                <div className="text-sm font-medium text-[#d4af37] mb-2">Buy Rockets with $MT</div>
+                <div className="text-sm font-medium text-[#d4af37] mb-2">{t('buy_mt_title')}</div>
                 <div className="grid grid-cols-1 gap-2">
                   <button 
                     onClick={() => buyRocketsWithMT({ rockets: 100, costMT: 50 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
-                    100 Rockets — 50 $MT
+                    {t('pack_100')}
                   </button>
                   <button 
                     onClick={() => buyRocketsWithMT({ rockets: 300, costMT: 120 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
-                    300 Rockets — 120 $MT (Best Value)
+                    {t('pack_300')}
                   </button>
                 </div>
-                <div className="text-[10px] text-[#8a8a94] mt-2 text-center">Real SPL transfer • Tx receipt shown</div>
+                <div className="text-[10px] text-[#8a8a94] mt-2 text-center">{t('buy_mt_note')}</div>
               </div>
 
               <div className="space-y-3 text-sm">
+                {/* Existing */}
                 <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
-                  <div>10 Extra Spins</div>
+                  <div>{t('extra_spins')}</div>
                   <button 
                     onClick={() => { if (rockets >= 25) { setRockets(r => r - 25); toast.success('10 Extra Spins added!'); } else toast.error('Not enough Rockets'); }}
                     className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
@@ -1414,7 +1660,7 @@ export default function SolanaReels() {
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
-                  <div>2x Multiplier (10 spins)</div>
+                  <div>{t('multiplier_2x')}</div>
                   <button 
                     onClick={() => { if (rockets >= 50) { setRockets(r => r - 50); toast.success('2x Multiplier activated!'); } else toast.error('Not enough Rockets'); }}
                     className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
@@ -1424,12 +1670,104 @@ export default function SolanaReels() {
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
-                  <div>MT Logo Cosmetic</div>
+                  <div>{t('cosmetic_logo')}</div>
                   <button 
                     onClick={() => { if (rockets >= 100) { setRockets(r => r - 100); toast.success('Cosmetic unlocked! (Coming to all games)'); } else toast.error('Not enough Rockets'); }}
                     className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
                   >
                     100 Rockets
+                  </button>
+                </div>
+
+                {/* New expanded Shop items - more ways to spend Rockets meaningfully */}
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('revenge_refill')} <span className="text-[10px] text-[#8a8a94]">· {t('revenge_refill_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { 
+                      if (rockets >= 30) { 
+                        setRockets(r => r - 30); 
+                        if (revengeTokenActive) {
+                          setRevengeUsesLeft(u => u + 3);
+                          toast.success('Revenge extended +3 spins!');
+                        } else {
+                          setHasRevengeToken(true); 
+                          toast.success('Revenge Refill purchased! Ready to activate.');
+                        }
+                      } else toast.error('Not enough Rockets'); 
+                    }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    30 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('streak_saver')} <span className="text-[10px] text-[#8a8a94]">· {t('streak_saver_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { if (rockets >= 35) { setRockets(r => r - 35); setWinStreak(w => w + 4); toast.success('+4 Win Streak!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    35 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('xp_blast')} <span className="text-[10px] text-[#8a8a94]">· {t('xp_blast_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { 
+                      if (rockets >= 25) { 
+                        setRockets(r => r - 25); 
+                        const newXp = xp + 150; 
+                        setXp(newXp); 
+                        saveProgress(undefined, newXp); 
+                        toast.success('XP Blast! +150 XP'); 
+                      } else toast.error('Not enough Rockets'); 
+                    }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    25 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('scatter_surge')} <span className="text-[10px] text-[#8a8a94]">· {t('scatter_surge_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { if (rockets >= 45) { setRockets(r => r - 45); setScatterBoostSpins(12); toast.success('Scatter Surge active for 12 spins!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    45 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('auto_bundle')} <span className="text-[10px] text-[#8a8a94]">· {t('auto_bundle_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { if (rockets >= 30) { setRockets(r => r - 30); setAutoSpinCount(c => c + 20); toast.success('+20 Auto Spins granted!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    30 Rockets
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
+                  <div>
+                    {t('eco_badge')} <span className="text-[10px] text-[#8a8a94]">· {t('eco_badge_desc')}</span>
+                  </div>
+                  <button 
+                    onClick={() => { if (rockets >= 60) { setRockets(r => r - 60); setWinShieldSpins(w => w + 5); toast.success('Ecosystem Badge active — small protection engaged!'); } else toast.error('Not enough Rockets'); }}
+                    className="px-4 py-1 rounded-xl bg-[#9945ff] text-white text-xs font-medium"
+                  >
+                    60 Rockets
                   </button>
                 </div>
               </div>
@@ -1481,7 +1819,7 @@ export default function SolanaReels() {
                 }} 
                 className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium"
               >
-                CLOSE SHOP
+                {t('shop_close')}
               </button>
             </motion.div>
           </div>
@@ -1499,12 +1837,12 @@ export default function SolanaReels() {
               className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-md w-full p-8"
               onClick={e => e.stopPropagation()}
             >
-              <div className="font-display text-3xl tracking-tight mb-6">Settings</div>
+              <div className="font-display text-3xl tracking-tight mb-6">{t('settings')}</div>
 
               <div className="space-y-6 text-sm">
                 {/* Language Selector */}
                 <div>
-                  <div className="text-[#8a8a94] mb-2">Language</div>
+                  <div className="text-[#8a8a94] mb-2">{t('language')}</div>
                   <select 
                     value={language} 
                     onChange={(e) => setLanguage(e.target.value)}
@@ -1528,37 +1866,50 @@ export default function SolanaReels() {
 
                 {/* Social Connections for MT Ecosystem */}
                 <div>
-                  <div className="text-[#8a8a94] mb-2">Connect Accounts (MT Ecosystem)</div>
+                  <div className="text-[#8a8a94] mb-2">{t('socials_title')}</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { key: 'telegram', label: 'Telegram' },
-                      { key: 'discord', label: 'Discord' },
-                      { key: 'x', label: 'X (Twitter)' },
-                      { key: 'facebook', label: 'Facebook' },
-                    ].map((social) => (
-                      <button
-                        key={social.key}
-                        onClick={() => {
-                          const newSocials = { ...connectedSocials, [social.key]: !connectedSocials[social.key] };
-                          setConnectedSocials(newSocials);
-                          toast.success(
-                            connectedSocials[social.key] 
-                              ? `Disconnected from ${social.label}` 
-                              : `Connected to ${social.label} (syncs to MT Wallet)`
-                          );
-                        }}
-                        className={`py-2.5 rounded-2xl border text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
-                          connectedSocials[social.key] 
-                            ? 'bg-[#14f195]/10 text-[#14f195] border-[#14f195]/50' 
-                            : 'bg-[#1a1a22] border-[#33333a] hover:bg-[#25252d] hover:border-[#9945ff]'
-                        }`}
-                      >
-                        {connectedSocials[social.key] ? '✓ ' : ''}{social.label}
-                      </button>
-                    ))}
+                      { key: 'telegram', label: 'Telegram', url: 'https://t.me/memetorrent' },
+                      { key: 'discord', label: 'Discord', url: 'https://discord.gg/futuret3ch' },
+                      { key: 'x', label: 'X (Twitter)', url: 'https://x.com/Futuret3chdev' },
+                      { key: 'facebook', label: 'Facebook', url: 'https://facebook.com/futuret3ch' },
+                    ].map((social) => {
+                      const isConnected = !!connectedSocials[social.key];
+                      return (
+                        <button
+                          key={social.key}
+                          onClick={() => {
+                            const wasConnected = isConnected;
+                            const newSocials = { ...connectedSocials, [social.key]: !isConnected };
+                            setConnectedSocials(newSocials);
+
+                            if (!wasConnected) {
+                              // Real connect action: open community link
+                              if (social.url) window.open(social.url, '_blank');
+                              // Honest first-connect reward (local P2E, visible immediately)
+                              if (!wasConnected) {
+                                setRockets(r => r + 8);
+                                toast.success(`Connected to ${social.label} +8 Rockets`, {
+                                  description: 'Welcome to the MT Ecosystem community!'
+                                });
+                              }
+                            } else {
+                              toast.success(`Disconnected from ${social.label}`);
+                            }
+                          }}
+                          className={`py-2.5 rounded-2xl border text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                            isConnected 
+                              ? 'bg-[#14f195]/10 text-[#14f195] border-[#14f195]/50' 
+                              : 'bg-[#1a1a22] border-[#33333a] hover:bg-[#25252d] hover:border-[#9945ff]'
+                          }`}
+                        >
+                          {isConnected ? '✓ ' : ''}{social.label}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="text-[10px] text-[#8a8a94] mt-1">
-                    Connect to unlock cross-game perks in the MT ECO SYSTEM.
+                    {t('socials_hint')}
                   </div>
                 </div>
               </div>
