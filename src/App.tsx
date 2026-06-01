@@ -1071,61 +1071,7 @@ export default function SolanaReels() {
               </div>
             </div>
 
-            {/* Levels, Bonuses & Features */}
-            <div className="bg-[#111115] border border-[#222228] rounded-3xl p-6 mt-6">
-              <div className="uppercase text-xs tracking-[1.5px] text-[#8a8a94] mb-3">PROGRESS &amp; BONUSES</div>
 
-              <div className="space-y-4 text-sm">
-                {/* Level System */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="font-medium">Level {level}</div>
-                    <div className="text-[#8a8a94] text-xs">{xp % 100}/100 XP</div>
-                  </div>
-                  <div className="h-2 bg-[#1f1f26] rounded-full overflow-hidden">
-                    <div className="h-2 bg-[#d4af37]" style={{ width: `${(xp % 100)}%` }}></div>
-                  </div>
-                  <div className="text-xs text-[#8a8a94] mt-1">+{selectedCurrency === 'MEMETORRENT' ? '20%' : '0%'} XP bonus when betting with {TOKEN_SYMBOL}</div>
-                </div>
-
-                {/* Win Streak */}
-                <div className="flex justify-between">
-                  <div>Win Streak</div>
-                  <div className="font-mono text-[#d4af37]">{winStreak} 🔥</div>
-                </div>
-
-                {/* Simple Daily Bonus */}
-                <button 
-                  onClick={() => {
-                    const lastBonus = localStorage.getItem('last-daily-bonus');
-                    const now = Date.now();
-                    if (lastBonus && now - parseInt(lastBonus) < 24 * 60 * 60 * 1000) {
-                      toast.error('Daily bonus already claimed');
-                      return;
-                    }
-                    const bonus = 2 + (level * 0.5);
-                    setSessionBalance(prev => prev + bonus);
-                    localStorage.setItem('last-daily-bonus', now.toString());
-                    toast.success(`Daily Bonus! +${bonus.toFixed(1)} ${selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL}`);
-                  }}
-                  className="w-full py-2 rounded-xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-sm font-medium"
-                >
-                  Claim Daily Bonus (+{2 + (level * 0.5)} {selectedCurrency === 'SOL' ? 'SOL' : TOKEN_SYMBOL})
-                </button>
-
-                {/* Achievements */}
-                {achievements.length > 0 && (
-                  <div>
-                    <div className="text-xs text-[#8a8a94] mb-1">Achievements ({achievements.length})</div>
-                    <div className="flex flex-wrap gap-1">
-                      {achievements.map((a, i) => (
-                        <div key={i} className="text-[10px] px-2 py-0.5 bg-[#1a1a22] rounded border border-[#33333a]">{a}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
