@@ -165,4 +165,31 @@ Both will give you a live URL instantly with proper SPA routing and long-term ca
 
 Built with extreme attention to detail. No fake information anywhere.
 
+---
+
+## Fixing "Buffer is not defined" Error
+
+If you see this error when trying to bet/spin:
+
+> `Bet transaction failed: ReferenceError: Buffer is not defined`
+
+This is a known browser compatibility issue with Solana libraries.
+
+**I have already fixed this** in the code using `vite-plugin-node-polyfills`.
+
+### How to Deploy the Fix
+
+```powershell
+cd E:\solana-reels
+git add .
+git commit -m "Fixed 'Buffer is not defined' error with proper browser polyfills"
+git push
+```
+
+Then redeploy on Vercel (or let it auto-deploy from the GitHub push).
+
+After the new deployment is live, do a hard refresh (`Ctrl + Shift + R`).
+
+---
+
 Ready when you are — deploy it and send me the link when it's live. Then we can add features based on what you experience.
