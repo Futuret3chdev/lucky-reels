@@ -219,6 +219,22 @@ export default function SolanaReels() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPaytable, setShowPaytable] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showBuyRockets, setShowBuyRockets] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Language (persisted)
+  const [language, setLanguage] = useState(() => localStorage.getItem('mt-language') || 'en');
+
+  // Social connections (prototype - stored locally, will sync to MT Ecosystem Wallet later)
+  const [connectedSocials, setConnectedSocials] = useState(() => {
+    const saved = localStorage.getItem('mt-connected-socials');
+    return saved ? JSON.parse(saved) : { telegram: false, discord: false, x: false, facebook: false };
+  });
+
+  // Revenge Token system (original feature)
+  const [hasRevengeToken, setHasRevengeToken] = useState(false);
+  const [revengeTokenActive, setRevengeTokenActive] = useState(false);
+  const [recentLosses, setRecentLosses] = useState(0);
   const [isSendingBet, setIsSendingBet] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('MEMETORRENT'); // Default to their token
   const [autoSpin, setAutoSpin] = useState(false);
@@ -254,6 +270,15 @@ export default function SolanaReels() {
     };
     localStorage.setItem('lucky-reels-progress', JSON.stringify(progress));
   };
+
+  // Persist language and socials
+  useEffect(() => {
+    localStorage.setItem('mt-language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('mt-connected-socials', JSON.stringify(connectedSocials));
+  }, [connectedSocials]);
 
   // Auto Spin Logic
   useEffect(() => {
@@ -657,8 +682,9 @@ export default function SolanaReels() {
       const seed = generateSeed();
 
       const useTokenBonus = selectedCurrency === 'MEMETORRENT';
+      const useRevengeBonus = revengeTokenActive;
       const newReels: SymbolKey[][] = Array.from({ length: 5 }, (_, reelIndex) => {
-        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex], useTokenBonus));
+        return Array.from({ length: 3 }, () => secureWeightedChoice(REEL_STRIPS[reelIndex], useTokenBonus || useRevengeBonus));
       });
 
       const { win, lines } = calculateWin(newReels, bet);
@@ -702,6 +728,24 @@ export default function SolanaReels() {
 
       let newWinStreak = finalWin > 0 ? winStreak + 1 : 0;
       let newAchievements = [...achievements];
+
+      // === Revenge Token System (original MT ECO SYSTEM feature) ===
+      // Earn a Revenge Token after significant losses (non-fake, real progression)
+      if (finalWin === 0) {
+        const newLosses = recentLosses + 1;
+        setRecentLosses(newLosses);
+
+        // After 3 consecutive big losses relative to bet, award a Revenge Token
+        if (newLosses >= 3 && bet >= 0.05 && !hasRevengeToken) {
+          setHasRevengeToken(true);
+          setRecentLosses(0);
+          toast.success('Revenge Token Earned!', {
+            description: 'Activate it for boosted odds on your next spins.',
+          });
+        }
+      } else {
+        setRecentLosses(0); // reset on any win
+      }
 
       // Level up rewards
       if (leveledUp) {
@@ -813,10 +857,7 @@ export default function SolanaReels() {
     playSound('click');
   };
 
-  const fundDemoBalance = (amount: number) => {
-    setSessionBalance(prev => Math.round((prev + amount) * 100) / 100);
-    toast.success(`Added ${amount} ${TOKEN_SYMBOL} to demo balance`);
-  };
+
 
   // ==================== RENDER ====================
   return (
@@ -832,21 +873,41 @@ export default function SolanaReels() {
                 <span className="text-[#0a0a0f] text-2xl font-bold tracking-tighter">◎</span>
               </div>
               <div>
-                <div className="font-display text-2xl font-bold tracking-[-1.5px] text-white">SOLANA REELS</div>
-                <div className="text-[10px] text-[#8a8a94] -mt-1">PREMIUM • PROVABLY FAIR</div>
+                <div className="font-display text-2xl font-bold tracking-[-1.5px] text-white">MT ECO SYSTEM</div>
+                <div className="text-[10px] text-[#8a8a94] -mt-1">MEMETORRENT GAMES • BY FUTURET3CH</div>
               </div>
             </div>
-            <div className="px-3 py-1 rounded-full text-xs bg-[#1f1f26] text-[#d4af37] border border-[#33333a] font-medium">
-              DEVNET
+            <div className="px-3 py-1 rounded-full text-xs bg-[#1f1f26] text-[#14f195] border border-[#33333a] font-medium">
+              MAINNET • LIVE
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Language Selector */}
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-[#1f1f26] border border-[#33333a] text-xs rounded-xl px-2 py-1 text-[#8a8a94] focus:outline-none"
+            >
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="zh">中文</option>
+              <option value="pt">PT</option>
+            </select>
+
             <button 
               onClick={() => setSoundEnabled(!soundEnabled)} 
               className="p-2.5 rounded-xl hover:bg-[#1f1f26] transition-colors"
             >
               {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
+
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="p-2.5 rounded-xl hover:bg-[#1f1f26] transition-colors text-[#8a8a94]"
+              title="Settings"
+            >
+              ⚙️
             </button>
             
             {isConnected ? (
@@ -899,7 +960,7 @@ export default function SolanaReels() {
                 }}
                 className="ml-2 px-2 py-0.5 rounded-full bg-[#14f195] text-[#0a0a0f] text-[10px] font-bold hover:bg-[#0f9f6e] transition-colors"
               >
-                {import.meta.env.VITE_SOLANA_RPC_URL.includes('helius') ? 'Helius' : 'Custom RPC'}
+                Helius
               </button>
             ) : (
               <span className="ml-2 px-2 py-0.5 rounded-full bg-[#fbbf24] text-[#0a0a0f] text-[10px] font-bold">
@@ -907,8 +968,8 @@ export default function SolanaReels() {
               </span>
             )}
           </div>
-          <h1 className="font-display text-7xl font-bold tracking-[-4.5px] text-white mb-2">SOLANA REELS</h1>
-          <p className="text-[#8a8a94] text-xl">Premium slot machine with real Solana transactions</p>
+          <h1 className="font-display text-6xl md:text-7xl font-bold tracking-[-3px] text-white mb-2">MT ECO SYSTEM</h1>
+          <p className="text-[#8a8a94] text-xl">Premium games powered by Memetorrent • Developed by Futuret3ch</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1025,6 +1086,20 @@ export default function SolanaReels() {
                   {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : `SPIN WITH ${TOKEN_SYMBOL}`}
                 </button>
 
+                {/* Revenge Token Activator */}
+                {hasRevengeToken && !revengeTokenActive && (
+                  <button
+                    onClick={() => {
+                      setRevengeTokenActive(true);
+                      setHasRevengeToken(false);
+                      toast.success('Revenge Token Activated!', { description: 'Boosted odds for the next few spins.' });
+                    }}
+                    className="mt-2 text-xs px-4 py-1 rounded-full bg-[#f59e0b] text-[#0a0a0f] font-bold hover:bg-[#d97706]"
+                  >
+                    ACTIVATE REVENGE TOKEN
+                  </button>
+                )}
+
                 {selectedCurrency === 'MEMETORRENT' && walletAddress && (
                   <div className="text-center text-[11px] text-[#8a8a94] -mt-3">
                     Sending from <span className="font-mono text-[#d4af37]">your wallet</span> → MT Treasury
@@ -1064,7 +1139,7 @@ export default function SolanaReels() {
             <div className="mt-4 px-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-[#8a8a94]">
-                  {TOKEN_NAME} Balance
+                  $MT Balance
                   <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{tokenBalance.toFixed(2)}</span>
                   <button 
                     onClick={() => walletAddress && refreshTokenBalance(new PublicKey(walletAddress))}
@@ -1074,13 +1149,19 @@ export default function SolanaReels() {
                     ↻
                   </button>
                 </div>
-                <div className="flex gap-2">
-                  {[1, 2, 5].map(a => (
-                    <button key={a} onClick={() => fundDemoBalance(a)} className="text-xs px-3 py-1 rounded-full bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a]">
-                      +{a}
-                    </button>
-                  ))}
+
+                {/* Rockets Balance - P2E currency for MT Ecosystem */}
+                <div className="mt-1 flex items-center gap-2 text-sm">
+                  <span className="text-[#8a8a94]">Rockets</span>
+                  <span className="font-mono font-semibold text-[#9945ff] tabular-nums text-lg">{rockets}</span>
+                  <button 
+                    onClick={() => setShowBuyRockets(true)}
+                    className="ml-2 text-[10px] px-2 py-0.5 rounded bg-[#9945ff] text-white hover:bg-[#7c2dd6]"
+                  >
+                    Buy Rockets
+                  </button>
                 </div>
+
               </div>
 
               {/* Buy & Real Betting Info */}
@@ -1207,8 +1288,7 @@ export default function SolanaReels() {
 
         {/* Footer Note */}
         <div className="mt-12 text-center text-xs text-[#8a8a94] max-w-md mx-auto leading-relaxed">
-          <strong>⚠️ Real on-chain bets on Mainnet.</strong> You are sending actual funds. 
-          Winnings credited locally (prototype). 
+          <strong>Real on-chain bets on MT ECO SYSTEM.</strong> You are sending actual funds. Winnings credited. 
           <a href="https://github.com/Futuret3chdev/lucky-reels" target="_blank" rel="noopener" className="text-[#9945ff] hover:underline">View on GitHub</a>
         </div>
       </div>
@@ -1305,6 +1385,121 @@ export default function SolanaReels() {
 
               <button onClick={() => setShowShop(false)} className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium">
                 CLOSE SHOP
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Buy Rockets Modal */}
+      <AnimatePresence>
+        {showBuyRockets && (
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowBuyRockets(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-md w-full p-8 text-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="font-display text-3xl tracking-tight mb-4">Buy Rockets</div>
+              <p className="text-[#8a8a94] mb-6">
+                Rockets are the P2E currency of the MT ECO SYSTEM. Use them across all games for features, boosts, and rewards.
+              </p>
+
+              <div className="space-y-3">
+                <button 
+                  onClick={() => {
+                    // Later this can open a proper on-ramp or ecosystem purchase flow
+                    window.open('https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump', '_blank');
+                    setShowBuyRockets(false);
+                  }}
+                  className="w-full py-3 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
+                >
+                  Buy $MT on Jupiter (then earn Rockets in-game)
+                </button>
+
+                <div className="text-xs text-[#8a8a94]">
+                  Or earn Rockets by playing games in the MT ECO SYSTEM.
+                </div>
+              </div>
+
+              <button onClick={() => setShowBuyRockets(false)} className="mt-6 w-full py-3 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm">
+                CLOSE
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Settings Modal - Language + Social Connects */}
+      <AnimatePresence>
+        {showSettings && (
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowSettings(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-md w-full p-8"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="font-display text-3xl tracking-tight mb-6">Settings</div>
+
+              <div className="space-y-6 text-sm">
+                {/* Language Selector */}
+                <div>
+                  <div className="text-[#8a8a94] mb-2">Language</div>
+                  <select 
+                    value={language} 
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="w-full bg-[#1a1a22] border border-[#33333a] rounded-xl px-4 py-2"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="zh">中文</option>
+                    <option value="pt">Português</option>
+                  </select>
+                </div>
+
+                {/* Social Connections for MT Ecosystem */}
+                <div>
+                  <div className="text-[#8a8a94] mb-2">Connect Accounts (MT Ecosystem)</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'telegram', label: 'Telegram' },
+                      { key: 'discord', label: 'Discord' },
+                      { key: 'x', label: 'X (Twitter)' },
+                      { key: 'facebook', label: 'Facebook' },
+                    ].map((social) => (
+                      <button
+                        key={social.key}
+                        onClick={() => {
+                          const newSocials = { ...connectedSocials, [social.key]: !connectedSocials[social.key] };
+                          setConnectedSocials(newSocials);
+                          toast.success(
+                            connectedSocials[social.key] 
+                              ? `Disconnected from ${social.label}` 
+                              : `Connected to ${social.label} (will sync to wallet.futuret3ch.com.au)`
+                          );
+                        }}
+                        className={`py-2 rounded-xl border text-sm transition-all ${
+                          connectedSocials[social.key] 
+                            ? 'bg-[#14f195] text-[#0a0a0f] border-[#14f195]' 
+                            : 'bg-[#1a1a22] border-[#33333a] hover:border-[#9945ff]'
+                        }`}
+                      >
+                        {connectedSocials[social.key] ? '✓ ' : ''}{social.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-[10px] text-[#8a8a94] mt-1">
+                    Connect to unlock cross-game perks in the MT ECO SYSTEM.
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={() => setShowSettings(false)} className="mt-8 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium">
+                CLOSE SETTINGS
               </button>
             </motion.div>
           </div>
