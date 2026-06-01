@@ -201,7 +201,15 @@ export default function SolanaReels() {
   const [tokenBalance, setTokenBalance] = useState<number>(0); // $MT balance
 
   // Rockets - P2E cross-game currency (separate from $MT balance)
-  const [rockets, setRockets] = useState<number>(0);
+  const [rockets, setRockets] = useState<number>(() => {
+    const saved = localStorage.getItem('mt-rockets');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  // Persist Rockets whenever they change
+  useEffect(() => {
+    localStorage.setItem('mt-rockets', rockets.toString());
+  }, [rockets]);
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletProvider, setWalletProvider] = useState<any>(null); // For signing real transactions
@@ -219,7 +227,6 @@ export default function SolanaReels() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPaytable, setShowPaytable] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [showBuyRockets, setShowBuyRockets] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Language (persisted)
@@ -235,6 +242,9 @@ export default function SolanaReels() {
   const [hasRevengeToken, setHasRevengeToken] = useState(false);
   const [revengeTokenActive, setRevengeTokenActive] = useState(false);
   const [recentLosses, setRecentLosses] = useState(0);
+
+  // Last successful Rocket purchase (for showing tx confirmation in Shop)
+  const [lastRocketPurchase, setLastRocketPurchase] = useState<{ rockets: number; costMT: number; tx: string } | null>(null);
   const [isSendingBet, setIsSendingBet] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('MEMETORRENT'); // Default to their token
   const [autoSpin, setAutoSpin] = useState(false);
@@ -568,6 +578,43 @@ export default function SolanaReels() {
     }
   };
 
+  // Real on-chain transfer of $MT to the MT Ecosystem Treasury
+  const sendMTToTreasury = async (amount: number): Promise<string | null> => {
+    if (!walletAddress || !walletProvider) return null;
+
+    try {
+      const userPubkey = new PublicKey(walletAddress);
+      const decimals = 6;
+      const tokenAmount = Math.floor(amount * Math.pow(10, decimals));
+
+      const userAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, userPubkey);
+      const treasuryAta = await getAssociatedTokenAddress(MEMETORRENT_MINT, MT_HOUSE_WALLET);
+
+      const transaction = new Transaction().add(
+        createTransferInstruction(
+          userAta,
+          treasuryAta,
+          userPubkey,
+          tokenAmount
+        )
+      );
+
+      const { blockhash } = await CONNECTION.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = userPubkey;
+
+      const signedTx = await walletProvider.signAndSendTransaction(transaction);
+      const signature = signedTx.signature;
+
+      await CONNECTION.confirmTransaction(signature, 'confirmed');
+
+      return signature;
+    } catch (error: any) {
+      console.error('Failed to send $MT to treasury:', error);
+      throw error;
+    }
+  };
+
   const refreshTokenBalance = async (pubkey: PublicKey) => {
     try {
       // More reliable method: calculate the ATA and query it directly
@@ -586,6 +633,49 @@ export default function SolanaReels() {
     } catch (e: any) {
       console.warn('Token balance fetch issue:', e?.message || e);
       setTokenBalance(0);
+    }
+  };
+
+  // Real $MT purchase of Rockets packs → sends SPL to treasury, persists Rockets, shows tx receipt
+  const buyRocketsWithMT = async (pack: { rockets: number; costMT: number }) => {
+    if (!walletAddress || !walletProvider) {
+      toast.error('Wallet not connected');
+      return;
+    }
+    if (tokenBalance < pack.costMT) {
+      toast.error('Not enough $MT');
+      return;
+    }
+
+    try {
+      const sig = await sendMTToTreasury(pack.costMT);
+      if (!sig) {
+        toast.error('Transaction failed to send');
+        return;
+      }
+
+      // Update balances and Rockets (persisted via useEffect)
+      setTokenBalance(b => Math.max(0, b - pack.costMT));
+      setRockets(r => r + pack.rockets);
+      setLastRocketPurchase({ rockets: pack.rockets, costMT: pack.costMT, tx: sig });
+
+      // Refresh on-chain balance for accuracy
+      await refreshTokenBalance(new PublicKey(walletAddress));
+
+      // Prominent receipt toast with direct explorer link (makes real transfer very visible)
+      const short = `${sig.slice(0, 8)}...${sig.slice(-4)}`;
+      const explorerUrl = `https://explorer.solana.com/tx/${sig}?cluster=mainnet`;
+      toast.success(`Purchase successful – +${pack.rockets} Rockets for ${pack.costMT} $MT`, {
+        description: `Tx: ${short}`,
+        action: {
+          label: 'View on Explorer',
+          onClick: () => window.open(explorerUrl, '_blank'),
+        },
+        duration: 15000,
+      });
+    } catch (e: any) {
+      console.error('Rocket purchase failed:', e);
+      toast.error('Purchase failed', { description: e?.message || 'Transaction failed' });
     }
   };
 
@@ -1292,23 +1382,24 @@ export default function SolanaReels() {
               <div className="font-display text-3xl tracking-tight mb-2">MT Shop</div>
               <div className="text-sm text-[#8a8a94] mb-4">Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.</div>
 
-              {/* Buy Rockets Section inside Shop */}
+              {/* Buy Rockets Section inside Shop - real on-chain $MT transfers */}
               <div className="mb-4 p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
                 <div className="text-sm font-medium text-[#d4af37] mb-2">Buy Rockets with $MT</div>
                 <div className="grid grid-cols-1 gap-2">
                   <button 
-                    onClick={() => { if (tokenBalance >= 50) { setTokenBalance(b => b - 50); setRockets(r => r + 100); toast.success('+100 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                    onClick={() => buyRocketsWithMT({ rockets: 100, costMT: 50 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
                     100 Rockets — 50 $MT
                   </button>
                   <button 
-                    onClick={() => { if (tokenBalance >= 120) { setTokenBalance(b => b - 120); setRockets(r => r + 300); toast.success('+300 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                    onClick={() => buyRocketsWithMT({ rockets: 300, costMT: 120 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
                     300 Rockets — 120 $MT (Best Value)
                   </button>
                 </div>
+                <div className="text-[10px] text-[#8a8a94] mt-2 text-center">Real SPL transfer • Tx receipt shown</div>
               </div>
 
               <div className="space-y-3 text-sm">
@@ -1343,73 +1434,54 @@ export default function SolanaReels() {
                 </div>
               </div>
 
+              {/* Purchase Success Display with Explorer Link (visible while Shop open) */}
+              {lastRocketPurchase && (
+                <div className="mt-4 p-3 bg-[#1a1a22] border border-[#14f195] rounded-2xl text-xs relative">
+                  <button
+                    onClick={() => setLastRocketPurchase(null)}
+                    className="absolute top-1 right-2 text-[#8a8a94] hover:text-white"
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                  <div className="text-[#14f195] font-medium mb-1 pr-4">Purchase successful – Tx: {lastRocketPurchase.tx.slice(0,8)}...</div>
+                  <div className="mb-1">
+                    +{lastRocketPurchase.rockets} Rockets for {lastRocketPurchase.costMT} $MT
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a 
+                      href={`https://explorer.solana.com/tx/${lastRocketPurchase.tx}?cluster=mainnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#9945ff] hover:underline"
+                    >
+                      View on Explorer
+                    </a>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastRocketPurchase.tx);
+                        toast.success('Tx signature copied to clipboard');
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-[#33333a] hover:bg-[#44444a] rounded text-[#8a8a94]"
+                    >
+                      Copy Tx
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 text-xs text-[#8a8a94] text-center">
                 Rockets are earned across all MT games and can be used in the entire ecosystem.
               </div>
 
-              <button onClick={() => setShowShop(false)} className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium">
+              <button 
+                onClick={() => {
+                  setShowShop(false);
+                  setLastRocketPurchase(null); // clear success state when closing
+                }} 
+                className="mt-6 w-full py-4 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm font-medium"
+              >
                 CLOSE SHOP
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Buy Rockets Modal */}
-      <AnimatePresence>
-        {showBuyRockets && (
-          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" onClick={() => setShowBuyRockets(false)}>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.96, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              className="bg-[#111115] border border-[#33333a] rounded-3xl max-w-md w-full p-8 text-center"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="font-display text-3xl tracking-tight mb-4">Buy Rockets</div>
-              <p className="text-[#8a8a94] mb-6">
-                Rockets are the P2E currency of the MT ECO SYSTEM. Use them across all games for features, boosts, and rewards.
-              </p>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium mb-2">Buy Rockets with $MT</div>
-                  <button 
-                    onClick={() => {
-                      // This will later be a proper on-chain or off-chain purchase flow inside the MT Ecosystem
-                      // For now it opens a swap as a bridge
-                      window.open('https://jup.ag/swap?sell=ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump&buy=So11111111111111111111111111111111111111112', '_blank');
-                    }}
-                    className="w-full py-3 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-sm font-medium"
-                  >
-                    Swap $MT → Rockets (Coming to MT Wallet)
-                  </button>
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium mb-2">Buy Rockets Packs (Ecosystem)</div>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button 
-                      onClick={() => { if (tokenBalance >= 50) { setTokenBalance(b => b - 50); setRockets(r => r + 100); toast.success('+100 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
-                      className="w-full py-2.5 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
-                    >
-                      100 Rockets — 50 $MT
-                    </button>
-                    <button 
-                      onClick={() => { if (tokenBalance >= 120) { setTokenBalance(b => b - 120); setRockets(r => r + 300); toast.success('+300 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
-                      className="w-full py-2.5 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
-                    >
-                      300 Rockets — 120 $MT (Best Value)
-                    </button>
-                  </div>
-                  <div className="text-[10px] text-[#8a8a94] mt-1 text-center">
-                    Purchases are processed in the MT ECO SYSTEM.
-                  </div>
-                </div>
-              </div>
-
-              <button onClick={() => setShowBuyRockets(false)} className="mt-6 w-full py-3 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] text-sm">
-                CLOSE
               </button>
             </motion.div>
           </div>

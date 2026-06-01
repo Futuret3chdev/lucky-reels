@@ -144,11 +144,13 @@ This will make the app use your Helius key when developing locally.
 
 **Security Note**: Never commit your real API key. The `.env.local` file is already gitignored.
 
-The "Buy $MEMETORRENT" button now correctly opens Jupiter with SOL → $MEMETORRENT.
+**Important: Rocket Purchases & Persistence**
 
-The “Get SOL for fees” button lets players swap a small amount of $MEMETORRENT for SOL (keeping value inside the MT Ecosystem).
+- When you buy Rockets with $MT in the Shop, the app performs a **real on-chain $MT transfer** to the MT Ecosystem treasury.
+- Rockets are persisted in your browser (localStorage) so they survive refreshes.
+- On page refresh, your $MT balance is always re-fetched from the blockchain (source of truth), while Rockets come from local storage (prototype limitation until the full MT Ecosystem Wallet backend exists).
 
-Clear messaging throughout the UI reinforces that buying and betting with $MEMETORRENT helps fund the entire MT game network.
+This means after a successful "buy", your on-chain $MT will be lower after refresh, and your Rockets will remain.
 
 **Wallet & Treasury Clarification**
 - The address 35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD is the **MT Ecosystem treasury** (recipient only).
