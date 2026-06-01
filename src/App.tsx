@@ -903,6 +903,12 @@ export default function SolanaReels() {
                   {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : `SPIN WITH ${TOKEN_SYMBOL}`}
                 </button>
 
+                {selectedCurrency === 'MEMETORRENT' && walletAddress && (
+                  <div className="text-center text-[11px] text-[#8a8a94] -mt-3">
+                    Sending from <span className="font-mono text-[#d4af37]">your wallet</span> → MT Treasury
+                  </div>
+                )}
+
                 <button 
                   onClick={() => setShowPaytable(true)} 
                   className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
@@ -978,7 +984,7 @@ export default function SolanaReels() {
                 </a>
 
                 <div className="text-[#8a8a94] text-center">
-                  All {TOKEN_SYMBOL} bets go to the <span className="text-[#d4af37]">MT Ecosystem treasury</span>.<br />
+                  All {TOKEN_SYMBOL} bets go directly to the <span className="text-[#d4af37]">MT Ecosystem treasury</span> from <span className="font-mono">your wallet</span>.<br />
                   Buying {TOKEN_SYMBOL} helps fund the entire MT game network.
                 </div>
               </div>
