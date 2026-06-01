@@ -868,8 +868,8 @@ export default function SolanaReels() {
       <div className="border-b border-[#222228] bg-[#0a0a0f]/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div>
-            <div className="font-display text-xl font-bold tracking-[-1px] text-white">MAINNET • REAL ON-CHAIN BETS • LIVE</div>
-            <div className="text-[11px] text-[#14f195] -mt-0.5">Helius</div>
+            <div className="font-display text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
+            <div className="text-[11px] text-[#8a8a94] -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -889,17 +889,17 @@ export default function SolanaReels() {
             </button>
             
             {isConnected ? (
-              <div className="flex items-center gap-2 bg-[#1f1f26] border border-[#33333a] rounded-2xl pl-5 pr-2 py-1.5 text-sm">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 bg-[#14f195] rounded-full animate-pulse" />
-                  <span className="font-mono text-xs text-[#8a8a94]">{walletAddress!.slice(0,4)}...{walletAddress!.slice(-4)}</span>
+              <div className="flex items-center gap-2 bg-[#1f1f26] border border-[#33333a] rounded-2xl px-3 py-1 text-xs max-w-[220px]">
+                <div className="flex items-center gap-1.5 truncate">
+                  <div className="w-2 h-2 bg-[#14f195] rounded-full flex-shrink-0" />
+                  <span className="font-mono text-[#8a8a94] truncate">{walletAddress!.slice(0,4)}...{walletAddress!.slice(-4)}</span>
                 </div>
-                <div className="font-semibold text-[#d4af37] tabular-nums">{balance.toFixed(3)} SOL</div>
+                <div className="font-semibold text-[#d4af37] tabular-nums whitespace-nowrap">{balance.toFixed(3)} SOL</div>
                 <button 
                   onClick={disconnectWallet} 
-                  className="ml-2 px-3 py-1 text-xs rounded-xl bg-[#25252d] hover:bg-red-950/40 hover:text-red-400 transition-colors"
+                  className="ml-1 px-2 py-0.5 text-[10px] rounded-lg bg-[#25252d] hover:bg-red-950/40 hover:text-red-400 transition-colors flex-shrink-0"
                 >
-                  Disconnect
+                  ×
                 </button>
               </div>
             ) : (
@@ -1290,7 +1290,26 @@ export default function SolanaReels() {
               onClick={e => e.stopPropagation()}
             >
               <div className="font-display text-3xl tracking-tight mb-2">MT Shop</div>
-              <div className="text-sm text-[#8a8a94] mb-6">Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.</div>
+              <div className="text-sm text-[#8a8a94] mb-4">Spend your Rockets on boosts and cosmetics. Rockets work across the entire MT Ecosystem.</div>
+
+              {/* Buy Rockets Section inside Shop */}
+              <div className="mb-4 p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
+                <div className="text-sm font-medium text-[#d4af37] mb-2">Buy Rockets with $MT</div>
+                <div className="grid grid-cols-1 gap-2">
+                  <button 
+                    onClick={() => { if (tokenBalance >= 50) { setTokenBalance(b => b - 50); setRockets(r => r + 100); toast.success('+100 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                    className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
+                  >
+                    100 Rockets — 50 $MT
+                  </button>
+                  <button 
+                    onClick={() => { if (tokenBalance >= 120) { setTokenBalance(b => b - 120); setRockets(r => r + 300); toast.success('+300 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                    className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
+                  >
+                    300 Rockets — 120 $MT (Best Value)
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center p-3 bg-[#1a1a22] rounded-2xl">
@@ -1421,8 +1440,17 @@ export default function SolanaReels() {
                   >
                     <option value="en">English</option>
                     <option value="es">Español</option>
-                    <option value="zh">中文</option>
+                    <option value="zh">中文 (Chinese)</option>
                     <option value="pt">Português</option>
+                    <option value="it">Italiano (Italian)</option>
+                    <option value="mt">Malti (Maltese)</option>
+                    <option value="fil">Filipino (Philippines)</option>
+                    <option value="pcm">Nigerian Pidgin</option>
+                    <option value="ha">Hausa (Nigeria)</option>
+                    <option value="yo">Yorùbá (Nigeria)</option>
+                    <option value="ig">Igbo (Nigeria)</option>
+                    <option value="tl">Tagalog (Philippines)</option>
+                    <option value="ceb">Cebuano (Philippines)</option>
                   </select>
                 </div>
 
@@ -1444,13 +1472,13 @@ export default function SolanaReels() {
                           toast.success(
                             connectedSocials[social.key] 
                               ? `Disconnected from ${social.label}` 
-                              : `Connected to ${social.label} (will sync to wallet.futuret3ch.com.au)`
+                              : `Connected to ${social.label} (syncs to MT Wallet)`
                           );
                         }}
-                        className={`py-2 rounded-xl border text-sm transition-all ${
+                        className={`py-2.5 rounded-2xl border text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                           connectedSocials[social.key] 
-                            ? 'bg-[#14f195] text-[#0a0a0f] border-[#14f195]' 
-                            : 'bg-[#1a1a22] border-[#33333a] hover:border-[#9945ff]'
+                            ? 'bg-[#14f195]/10 text-[#14f195] border-[#14f195]/50' 
+                            : 'bg-[#1a1a22] border-[#33333a] hover:bg-[#25252d] hover:border-[#9945ff]'
                         }`}
                       >
                         {connectedSocials[social.key] ? '✓ ' : ''}{social.label}
