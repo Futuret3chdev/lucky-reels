@@ -395,11 +395,31 @@ export default function SolanaReels() {
 
       if (!provider) throw new Error('Wallet not found');
 
-      const resp = await provider.connect();
-      if (!resp?.publicKey) {
-        throw new Error('Failed to get public key from wallet');
+      let resp;
+      try {
+        resp = await provider.connect();
+      } catch (e) {
+        console.warn('Initial connect attempt warning:', e);
       }
-      const publicKey = resp.publicKey.toString();
+
+      // Robust public key extraction with retry (Solflare and some other wallets are slow to expose publicKey)
+      let pk = null;
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        pk = resp?.publicKey || provider?.publicKey;
+
+        if (pk) break;
+
+        // Small delay between retries — very important for Solflare
+        await new Promise(r => setTimeout(r, 250));
+      }
+
+      if (!pk) {
+        const walletName = walletType.charAt(0).toUpperCase() + walletType.slice(1);
+        throw new Error(`Failed to get public key from ${walletName}. Please try clicking the button again, or use Phantom instead.`);
+      }
+
+      const publicKey = typeof pk.toString === 'function' ? pk.toString() : String(pk);
 
       setWalletAddress(publicKey);
       setWalletProvider(provider); // Store for real transaction signing
@@ -409,24 +429,31 @@ export default function SolanaReels() {
       const lamports = await CONNECTION.getBalance(pubKey);
       setBalance(lamports / LAMPORTS_PER_SOL);
 
-      // Auto fetch $MT balance (with small retry for reliability)
+      // Auto fetch $MT balance reliably after connect
       await refreshTokenBalance(pubKey);
-      setTimeout(() => {
-        if (walletAddress === publicKey) {
-          refreshTokenBalance(pubKey);
-        }
-      }, 1200);
+
+      // Extra aggressive retries for token balance (some RPCs are slow right after connect)
+      [800, 1800, 3000].forEach(delay => {
+        setTimeout(() => {
+          if (walletAddress === publicKey) {
+            refreshTokenBalance(pubKey);
+          }
+        }, delay);
+      });
 
       // Listen for account changes or disconnects from the wallet (important for users with multiple accounts)
       if (provider?.on) {
         const handleAccountChanged = (newPublicKey: any) => {
           if (newPublicKey) {
-            const newKey = newPublicKey?.toString ? newPublicKey.toString() : null;
+            const newKey = typeof newPublicKey?.toString === 'function' 
+              ? newPublicKey.toString() 
+              : String(newPublicKey);
             setWalletAddress(newKey);
             const newPub = new PublicKey(newKey);
             CONNECTION.getBalance(newPub).then(lamports => setBalance(lamports / LAMPORTS_PER_SOL));
             refreshTokenBalance(newPub);
-            toast.info('Account changed', { description: newKey.slice(0,4) + '...' + newKey.slice(-4) });
+            const short = String(newKey).slice(0,4) + '...' + String(newKey).slice(-4);
+            toast.info('Account changed', { description: short });
           } else {
             // User disconnected from within Phantom
             disconnectWallet();
@@ -448,10 +475,17 @@ export default function SolanaReels() {
       });
 
     } catch (error: any) {
-      console.error(error);
-      toast.error('Connection failed', { 
-        description: error.message || 'Please install the wallet extension' 
-      });
+      console.error('Wallet connection error:', error);
+      const msg = error.message || 'Unknown wallet error';
+
+      if (msg.includes('Failed to get public key')) {
+        toast.error(msg, { duration: 6000 });
+      } else {
+        toast.error('Connection failed', { 
+          description: msg,
+          duration: 5000 
+        });
+      }
     } finally {
       setIsConnecting(false);
     }
