@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wallet, 
   Play, 
-  Minus, 
-  Plus, 
   RotateCcw, 
   Trophy, 
   Volume2, 
@@ -1182,9 +1180,37 @@ export default function SolanaReels() {
       {/* Top Bar - Clean MT ECO SYSTEM Branding */}
       <div className="border-b border-[#222228] bg-[#0a0a0f]/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div>
-            <div className="font-display text-lg sm:text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
-            <div className="text-[11px] text-[#8a8a94] -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div>
+              <div className="font-display text-lg sm:text-xl font-bold tracking-[-1px] text-white">MT ECO SYSTEM</div>
+              <div className="text-[11px] text-[#8a8a94] -mt-0.5">by MEMETORRENT &amp; FUTURET3CH</div>
+            </div>
+
+            {/* PAYTABLE / SHOP / AUTO 25 — now in top bar near heading */}
+            <div className="flex items-center gap-1 pl-2 sm:pl-3 border-l border-[#222228] ml-1">
+              <button
+                onClick={() => setShowPaytable(true)}
+                className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] rounded-lg sm:rounded-xl border border-[#33333a] hover:bg-[#1f1f26] text-[#8a8a94] hover:text-white transition flex items-center gap-1"
+              >
+                <Trophy size={11} className="sm:hidden" /><Trophy size={13} className="hidden sm:inline" /> <span className="hidden sm:inline">PAYTABLE</span><span className="sm:hidden">PAY</span>
+              </button>
+              <button
+                onClick={() => setShowShop(true)}
+                className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] rounded-lg sm:rounded-xl border border-[#33333a] hover:bg-[#1f1f26] text-[#8a8a94] hover:text-white transition flex items-center gap-1"
+              >
+                🛒 <span className="hidden sm:inline">SHOP</span>
+              </button>
+              <button
+                onClick={() => {
+                  const newAuto = !autoSpin;
+                  setAutoSpin(newAuto);
+                  if (newAuto) setAutoSpinCount(25);
+                }}
+                className={`px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] rounded-lg sm:rounded-xl border transition flex items-center gap-1 ${autoSpin ? 'border-[#9945ff] bg-[#9945ff]/10 text-[#c084fc]' : 'border-[#33333a] hover:bg-[#1f1f26] text-[#8a8a94] hover:text-white'}`}
+              >
+                {autoSpin ? `AUTO ${autoSpinCount}` : 'AUTO 25'}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1273,90 +1299,82 @@ export default function SolanaReels() {
                 ))}
               </div>
 
-              {/* Win Display */}
-              <div className="mt-6 flex items-center justify-between text-sm">
-                <div>
-                  {lastWin > 0 && (
-                    <div className="text-[#d4af37] font-semibold text-2xl tabular-nums">
-                      +{lastWin.toFixed(2)} SOL
-                    </div>
-                  )}
-                </div>
-                <div className="text-right text-[#8a8a94]">
+              {/* Centered section directly under the game canvas (reels) — clean as requested */}
+              <div className="mt-4 flex flex-col items-center text-center">
+                {/* subtle last win (kept only to satisfy state usage; visually minimal) */}
+                {lastWin > 0 && <div className="text-[10px] text-[#d4af37]/70 tabular-nums mb-0.5">+{lastWin.toFixed(2)}</div>}
+
+                {/* RTP line — exactly as specified */}
+                <div className="text-[#8a8a94] text-xs sm:text-sm mb-2 tracking-wide">
                   RTP <span className="text-[#d4af37] font-medium">96.4%</span> • Max Win 125×
                 </div>
-              </div>
 
-              {/* Controls */}
-              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-end justify-between gap-4">
-                {/* Bet + Spin group - stacks vertically on mobile for better usability */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto">
-                  <div className="flex-1 sm:flex-none">
-                    <div className="text-xs tracking-widest text-[#8a8a94] mb-2 flex items-center justify-between">
-                      BET AMOUNT
-                      {/* Currency Selector */}
-                      <div className="flex rounded-lg overflow-hidden border border-[#33333a] text-xs">
-                        <button
-                          onClick={() => setSelectedCurrency('MEMETORRENT')}
-                          className={`px-2 py-0.5 ${selectedCurrency === 'MEMETORRENT' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
-                        >
-                          {TOKEN_SYMBOL}
-                        </button>
-                        <button
-                          onClick={() => setSelectedCurrency('SOL')}
-                          className={`px-2 py-0.5 ${selectedCurrency === 'SOL' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d]'}`}
-                        >
-                          SOL
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => adjustBet(-1)} 
-                        disabled={isSpinning}
-                        className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
-                      >
-                        <Minus size={16} />
-                      </button>
-                      
-                      <div className="flex-1 sm:flex-none px-5 sm:px-8 py-2.5 sm:py-3 bg-[#1a1a22] rounded-3xl border border-[#33333a] min-w-[120px] sm:min-w-[148px] text-center relative">
-                        <span className="font-mono text-3xl sm:text-4xl font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
-                        <span className="ml-1.5 text-[#8a8a94]">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
-                        
-                        {selectedCurrency === 'MEMETORRENT' && (
-                          <div className="absolute -top-2 -right-2 bg-[#14f195] text-[#0a0a0f] text-[9px] px-1.5 py-0.5 rounded-full font-bold">
-                            +25% RTP
-                          </div>
-                        )}
-                        {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && (
-                          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-[#f59e0b] whitespace-nowrap">
-                            Need some SOL for fees
-                          </div>
-                        )}
-                      </div>
+                {/* BET AMOUNT label */}
+                <div className="uppercase text-[9px] sm:text-[10px] tracking-[2.5px] text-[#8a8a94] mb-0.5">BET AMOUNT</div>
 
-                      <button 
-                        onClick={() => adjustBet(1)} 
-                        disabled={isSpinning}
-                        className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition"
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  </div>
-
+                {/* Currency tabs: $MEMETORRENT / SOL */}
+                <div className="inline-flex rounded-lg overflow-hidden border border-[#33333a] text-xs sm:text-sm mb-1.5">
                   <button
-                    onClick={spin}
-                    disabled={isSpinning || isSendingBet || !walletAddress}
-                    className="btn-gold text-base sm:text-xl px-8 sm:px-16 py-4 sm:py-5 rounded-3xl flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all w-full sm:w-auto"
+                    onClick={() => setSelectedCurrency('MEMETORRENT')}
+                    className={`px-3 py-0.5 sm:px-4 sm:py-1 font-medium transition ${selectedCurrency === 'MEMETORRENT' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d] text-[#8a8a94]'}`}
                   >
-                    <Play className="w-6 h-6" /> 
-                    {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : t('spin_btn')}
+                    $MEMETORRENT
+                  </button>
+                  <button
+                    onClick={() => setSelectedCurrency('SOL')}
+                    className={`px-3 py-0.5 sm:px-4 sm:py-1 font-medium transition ${selectedCurrency === 'SOL' ? 'bg-[#9945ff] text-white' : 'bg-[#1f1f26] hover:bg-[#25252d] text-[#8a8a94]'}`}
+                  >
+                    SOL
                   </button>
                 </div>
 
-                {/* Revenge Token Activator - improved visuals */}
-                {hasRevengeToken && !revengeTokenActive && (
+                {/* Bet amount: 0.10$MEMETORRENT+25% RTP (tight, as requested) */}
+                <div className="flex items-center gap-1.5 mb-0">
+                  <button 
+                    onClick={() => adjustBet(-1)} 
+                    disabled={isSpinning}
+                    className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition text-lg leading-none select-none"
+                  >
+                    −
+                  </button>
+
+                  <div className="relative px-5 sm:px-6 py-1.5 sm:py-2 bg-[#1a1a22] rounded-2xl border border-[#33333a] min-w-[118px] text-center">
+                    <span className="font-mono text-2xl sm:text-[28px] font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
+                    <span className="ml-1 text-[#8a8a94] text-xs align-baseline">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
+
+                    {selectedCurrency === 'MEMETORRENT' && (
+                      <div className="absolute -top-1.5 -right-1 bg-[#14f195] text-[#0a0a0f] text-[8px] px-1 py-px rounded-full font-bold tracking-tight">+25% RTP</div>
+                    )}
+                  </div>
+
+                  <button 
+                    onClick={() => adjustBet(1)} 
+                    disabled={isSpinning}
+                    className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] active:scale-95 transition text-lg leading-none select-none"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Fee warning — exactly as requested */}
+                {selectedCurrency === 'MEMETORRENT' && balance < MIN_SOL_FOR_FEES && (
+                  <div className="text-[10px] text-[#f59e0b] mt-0.5">Need some SOL for fees</div>
+                )}
+
+                {/* SPIN with memetorrent just below that */}
+                <button
+                  onClick={spin}
+                  disabled={isSpinning || isSendingBet || !walletAddress}
+                  className="btn-gold text-sm px-8 sm:px-12 py-2.5 sm:py-3 rounded-3xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all mt-2 font-semibold"
+                >
+                  <Play className="w-4 h-4" /> 
+                  {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : (selectedCurrency === 'MEMETORRENT' ? 'SPIN WITH $MEMETORRENT' : 'SPIN')}
+                </button>
+              </div>
+
+              {/* Revenge indicators moved lower so they don't interrupt the clean centered area under the canvas */}
+              {hasRevengeToken && !revengeTokenActive && (
+                <div className="mt-3 flex justify-center">
                   <button
                     onClick={() => {
                       setRevengeTokenActive(true);
@@ -1366,62 +1384,24 @@ export default function SolanaReels() {
                         description: '5 boosted spins active — revenge the house!' 
                       });
                     }}
-                    className="mt-3 w-full max-w-[240px] sm:max-w-[260px] mx-auto py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-[0.985] transition-all"
+                    className="px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-xs flex items-center gap-1.5 shadow active:scale-[0.985] transition-all"
                   >
                     ⚔️ {t('revenge_activate')} (5 spins)
                   </button>
-                )}
+                </div>
+              )}
 
-                {/* Prominent Revenge Active Indicator */}
-                {revengeTokenActive && revengeUsesLeft > 0 && (
-                  <div className="mt-3 px-4 py-2 rounded-2xl bg-[#3b1f0f] border border-[#f59e0b]/60 text-[#fbbf24] text-xs font-medium flex items-center justify-center gap-2 animate-pulse">
-                    ⚔️ REVENGE ACTIVE — {revengeUsesLeft} spins left
-                    <span className="text-[10px] opacity-70">(boosted odds)</span>
-                  </div>
-                )}
+              {revengeTokenActive && revengeUsesLeft > 0 && (
+                <div className="mt-2 text-center px-3 py-1 rounded-2xl bg-[#3b1f0f] border border-[#f59e0b]/60 text-[#fbbf24] text-xs font-medium inline-block">
+                  ⚔️ REVENGE ACTIVE — {revengeUsesLeft} spins left
+                </div>
+              )}
 
-                {/* Small visual meter for earning next Revenge (honest progression feedback) */}
-                {!revengeTokenActive && !hasRevengeToken && recentLosses > 0 && (
-                  <div className="mt-1 text-[10px] text-[#8a8a94] flex items-center justify-center gap-1">
-                    Losing streak: {recentLosses}/3 
-                    <span className="text-[#f59e0b]">•</span> 
-                    <span className="text-[#f59e0b]">{3 - recentLosses} more for Revenge Token</span>
-                  </div>
-                )}
-
-                {selectedCurrency === 'MEMETORRENT' && walletAddress && (
-                  <div className="text-center text-[11px] text-[#8a8a94] -mt-3">
-                    {t('treasury_note')}
-                  </div>
-                )}
-
-                <button 
-                  onClick={() => setShowPaytable(true)} 
-                  className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
-                >
-                  <Trophy size={17} /> {t('paytable_btn')}
-                </button>
-
-                {/* Shop Button - Spend Rockets */}
-                <button 
-                  onClick={() => setShowShop(true)} 
-                  className="px-6 py-4 rounded-2xl border border-[#33333a] hover:bg-[#1f1f26] text-sm flex items-center gap-2"
-                >
-                  🛒 {t('shop_btn')}
-                </button>
-
-                {/* Auto Spin Toggle */}
-                <button
-                  onClick={() => {
-                    const newAuto = !autoSpin;
-                    setAutoSpin(newAuto);
-                    if (newAuto) setAutoSpinCount(25); // 25 spins default
-                  }}
-                  className={`px-4 py-4 rounded-2xl border text-sm font-medium ${autoSpin ? 'border-[#9945ff] bg-[#9945ff]/10' : 'border-[#33333a] hover:bg-[#1f1f26]'}`}
-                >
-                  {autoSpin ? `AUTO (${autoSpinCount})` : 'AUTO 25'}
-                </button>
-              </div>
+              {!revengeTokenActive && !hasRevengeToken && recentLosses > 0 && (
+                <div className="mt-1 text-center text-[10px] text-[#8a8a94]">
+                  Losing streak: {recentLosses}/3 • <span className="text-[#f59e0b]">{3 - recentLosses} more for Revenge Token</span>
+                </div>
+              )}
             </div>
 
             {/* Session Balance + Real Betting Info */}
