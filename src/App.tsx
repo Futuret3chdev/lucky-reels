@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { 
   Play, 
   RotateCcw, 
@@ -367,6 +367,26 @@ function getTranslation(lang: string, key: string): string {
   return langPack[key] || TRANSLATIONS.en[key] || key;
 }
 
+// ==================== ANIMATED NUMBER (Odometer style) ====================
+function AnimatedNumber({ value, decimals = 0, className = "" }: { value: number; decimals?: number; className?: string }) {
+  const motionValue = useMotionValue(value);
+  const spring = useSpring(motionValue, { stiffness: 120, damping: 20, mass: 0.6 });
+  const [display, setDisplay] = useState(value.toFixed(decimals));
+
+  useEffect(() => {
+    const unsubscribe = spring.on("change", (latest) => {
+      setDisplay(Number(latest).toFixed(decimals));
+    });
+    return unsubscribe;
+  }, [spring, decimals]);
+
+  useEffect(() => {
+    motionValue.set(value);
+  }, [value, motionValue]);
+
+  return <span className={className}>{display}</span>;
+}
+
 // ==================== MAIN APP ====================
 export default function SolanaReels() {
   // Wallet State (100% Real)
@@ -397,6 +417,12 @@ export default function SolanaReels() {
   const [lastWin, setLastWin] = useState(0);
   const [winningLines, setWinningLines] = useState<number[]>([]);
   const [sessionBalance, setSessionBalance] = useState(5.0); // Demo play balance
+
+  // Celebration overlays
+  const [showBigWin, setShowBigWin] = useState(false);
+  const [bigWinAmount, setBigWinAmount] = useState(0);
+  const [showLevelUp, setShowLevelUp] = useState<{ level: number } | null>(null);
+  const [showAchievement, setShowAchievement] = useState<string | null>(null);
   const [history, setHistory] = useState<SpinHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPaytable, setShowPaytable] = useState(false);
@@ -428,6 +454,9 @@ export default function SolanaReels() {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('MEMETORRENT'); // Default to their token
   const [autoSpin, setAutoSpin] = useState(false);
   const [autoSpinCount, setAutoSpinCount] = useState(0);
+
+  // Floating reward animations (Rockets, XP, etc)
+  const [floatingRewards, setFloatingRewards] = useState<Array<{ id: number; text: string; color: string }>>([]);
 
   // Progression System (persisted)
   const [level, setLevel] = useState(1);
@@ -858,6 +887,7 @@ export default function SolanaReels() {
       // Update balances and Rockets (persisted via useEffect)
       setTokenBalance(b => Math.max(0, b - pack.costMT));
       setRockets(r => r + pack.rockets);
+      spawnFloatingReward(`+${pack.rockets} ROCKETS`, '#9945ff');
       setLastRocketPurchase({ rockets: pack.rockets, costMT: pack.costMT, tx: sig });
 
       // Refresh on-chain balance for accuracy
@@ -1063,6 +1093,8 @@ export default function SolanaReels() {
       if (leveledUp) {
         const bonus = newLevel * 0.5;
         setSessionBalance(prev => prev + bonus);
+        setShowLevelUp({ level: newLevel });
+        setTimeout(() => setShowLevelUp(null), 2200);
         toast.success(`Level Up! Reached Level ${newLevel}`, {
           description: `+${bonus} ${currencyLabel} bonus!`,
         });
@@ -1071,15 +1103,18 @@ export default function SolanaReels() {
       // Achievements
       if (newTotalSpins === 10 && !newAchievements.includes('First 10 Spins')) {
         newAchievements.push('First 10 Spins');
-        toast.success('Achievement Unlocked: First 10 Spins');
+        setShowAchievement('First 10 Spins');
+        setTimeout(() => setShowAchievement(null), 1800);
       }
       if (newWinStreak === 5 && !newAchievements.includes('Hot Streak')) {
         newAchievements.push('Hot Streak');
-        toast.success('Achievement Unlocked: 5 Win Streak!');
+        setShowAchievement('Hot Streak!');
+        setTimeout(() => setShowAchievement(null), 1800);
       }
       if (finalWin > 10 && !newAchievements.includes('Big Winner')) {
         newAchievements.push('Big Winner');
-        toast.success('Achievement Unlocked: Big Win!');
+        setShowAchievement('Big Winner!');
+        setTimeout(() => setShowAchievement(null), 1800);
       }
 
       // Save progression
@@ -1104,6 +1139,7 @@ export default function SolanaReels() {
         setRockets(prev => prev + earned);
         if (earned > 0) {
           toast.success(`+${earned} Rockets!`, { description: 'Use them in the MT Shop or other games.' });
+          spawnFloatingReward(`+${earned} ROCKETS`, '#9945ff');
         }
       }
 
@@ -1124,15 +1160,21 @@ export default function SolanaReels() {
 
         if (isBig) {
           playSound('bigwin');
+          setBigWinAmount(finalWin);
+          setShowBigWin(true);
+          setTimeout(() => setShowBigWin(false), 2600);
+
+          // Bigger confetti + screen shake feel
           confetti({
-            particleCount: 180,
-            spread: 80,
-            origin: { y: 0.6 },
-            colors: ['#d4af37', '#f4d35e', '#9945ff', '#14f195'],
+            particleCount: 280,
+            spread: 100,
+            origin: { y: 0.55 },
+            colors: ['#d4af37', '#f4d35e', '#9945ff', '#14f195', '#ff6b6b'],
           });
           setTimeout(() => {
-            confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0.1, y: 0.7 } });
-          }, 180);
+            confetti({ particleCount: 160, angle: 55, spread: 70, origin: { x: 0.1, y: 0.65 } });
+            confetti({ particleCount: 160, angle: 125, spread: 70, origin: { x: 0.9, y: 0.65 } });
+          }, 220);
         } else {
           playSound('win');
         }
@@ -1169,7 +1211,16 @@ export default function SolanaReels() {
     playSound('click');
   };
 
+  // Spawn floating reward text (Rockets, XP, etc)
+  const spawnFloatingReward = (text: string, color: string = '#9945ff') => {
+    const id = Date.now() + Math.random();
+    setFloatingRewards(prev => [...prev, { id, text, color }]);
 
+    // Auto remove after animation
+    setTimeout(() => {
+      setFloatingRewards(prev => prev.filter(r => r.id !== id));
+    }, 1400);
+  };
 
   // ==================== RENDER ====================
   return (
@@ -1234,7 +1285,7 @@ export default function SolanaReels() {
                   <div className="w-2 h-2 bg-[#14f195] rounded-full flex-shrink-0" />
                   <span className="font-mono text-[#8a8a94] truncate">{walletAddress!.slice(0,4)}...{walletAddress!.slice(-4)}</span>
                 </div>
-                <div className="font-semibold text-[#d4af37] tabular-nums whitespace-nowrap">{balance.toFixed(3)} SOL</div>
+                <div className="font-semibold text-[#d4af37] tabular-nums whitespace-nowrap"><AnimatedNumber value={balance} decimals={3} /> SOL</div>
                 <button 
                   onClick={disconnectWallet} 
                   className="ml-1 px-2 py-0.5 text-[10px] rounded-lg bg-[#25252d] hover:bg-red-950/40 hover:text-red-400 transition-colors flex-shrink-0"
@@ -1282,12 +1333,57 @@ export default function SolanaReels() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* THE MACHINE */}
           <div className="lg:col-span-8">
-            <div className="slot-machine rounded-3xl p-4 sm:p-6 lg:p-8 relative">
+            <div className="slot-machine rounded-3xl p-4 sm:p-6 lg:p-8 relative overflow-visible">
+              {/* Floating Rewards Layer */}
+              <div className="absolute inset-0 pointer-events-none z-50">
+                <AnimatePresence>
+                  {floatingRewards.map((reward, index) => (
+                    <motion.div
+                      key={reward.id}
+                      initial={{ opacity: 0, y: 0, scale: 0.6 }}
+                      animate={{ 
+                        opacity: [0, 1, 1, 0], 
+                        y: -70 - (index * 8), 
+                        scale: [0.6, 1.1, 1] 
+                      }}
+                      transition={{ duration: 1.35, ease: "easeOut" }}
+                      className="absolute left-1/2 top-[42%] -translate-x-1/2 text-sm font-bold tracking-wider pointer-events-none"
+                      style={{ color: reward.color }}
+                    >
+                      {reward.text}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
               {/* Reels */}
               <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5 bg-[#0a0a0f] p-3 sm:p-4 rounded-2xl border border-[#222228]">
                 {reels.map((reel, reelIndex) => (
-                  <div key={reelIndex} className="reel rounded-2xl h-[218px] relative">
-                    <div className="absolute inset-0 flex flex-col justify-center gap-1 px-1">
+                  <div key={reelIndex} className="reel rounded-2xl h-[218px] relative overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0 flex flex-col justify-center gap-1 px-1"
+                      animate={
+                        isSpinning
+                          ? { y: [0, -28, 32, -18, 0] }
+                          : { y: 0 }
+                      }
+                      transition={
+                        isSpinning
+                          ? {
+                              duration: 0.55 + reelIndex * 0.06,
+                              repeat: Infinity,
+                              repeatType: "loop",
+                              ease: "linear",
+                              delay: reelIndex * 0.07,
+                            }
+                          : {
+                              type: "spring",
+                              stiffness: 280,
+                              damping: 18,
+                              mass: 0.8,
+                              delay: reelIndex * 0.12,
+                            }
+                      }
+                    >
                       {reel.map((symbolKey, rowIndex) => {
                         const sym = getSymbol(symbolKey);
                         const isWinning = winningLines.length > 0 && 
@@ -1296,28 +1392,61 @@ export default function SolanaReels() {
                            (winningLines.includes(2) && rowIndex === 2));
 
                         return (
-                          <div 
-                            key={rowIndex}
-                            className={`symbol h-[66px] rounded-xl ${isWinning ? 'ring-2 ring-[#d4af37] scale-105' : ''}`}
+                          <motion.div
+                            key={`${symbolKey}-${rowIndex}`}
+                            className={`symbol h-[66px] rounded-xl flex items-center justify-center ${isWinning ? 'ring-2 ring-[#d4af37]' : ''}`}
                             style={{ 
                               background: `${sym.color}15`,
                               color: sym.color,
                               border: `1px solid ${sym.color}30`
                             }}
+                            animate={
+                              isWinning
+                                ? { 
+                                    scale: [1, 1.08, 1],
+                                    filter: ["brightness(1)", "brightness(1.3)", "brightness(1)"]
+                                  }
+                                : { scale: 1 }
+                            }
+                            transition={
+                              isWinning
+                                ? { duration: 0.6, repeat: Infinity, repeatDelay: 0.4 }
+                                : {}
+                            }
                           >
                             <span className="text-5xl drop-shadow-lg">{sym.emoji}</span>
-                          </div>
+                          </motion.div>
                         );
                       })}
-                    </div>
+                    </motion.div>
+
+                    {/* Reel blur overlay while spinning */}
+                    {isSpinning && (
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none" />
+                    )}
                   </div>
                 ))}
               </div>
 
               {/* Centered section directly under the game canvas (reels) — clean as requested */}
               <div className="mt-4 flex flex-col items-center text-center">
-                {/* subtle last win (kept only to satisfy state usage; visually minimal) */}
-                {lastWin > 0 && <div className="text-[10px] text-[#d4af37]/70 tabular-nums mb-0.5">+{lastWin.toFixed(2)}</div>}
+                {/* Animated Win Display */}
+                <AnimatePresence>
+                  {lastWin > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.85 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="mb-1.5"
+                    >
+                      <div className="text-[#d4af37] font-bold text-xl sm:text-2xl tabular-nums tracking-tighter">
+                        +{lastWin.toFixed(2)} {selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}
+                      </div>
+                      <div className="text-[10px] text-[#14f195] font-medium tracking-widest">WIN!</div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* RTP line — exactly as specified */}
                 <div className="text-[#8a8a94] text-xs sm:text-sm mb-2 tracking-wide">
@@ -1353,14 +1482,20 @@ export default function SolanaReels() {
                     −
                   </button>
 
-                  <div className="relative px-5 sm:px-6 py-1.5 sm:py-2 bg-[#1a1a22] rounded-2xl border border-[#33333a] min-w-[118px] text-center">
+                  <motion.div
+                    layout
+                    className="relative px-5 sm:px-6 py-1.5 sm:py-2 bg-[#1a1a22] rounded-2xl border border-[#33333a] min-w-[118px] text-center"
+                    animate={{ scale: [1, 1.06, 1] }}
+                    transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                    key={bet}
+                  >
                     <span className="font-mono text-2xl sm:text-[28px] font-semibold text-white tabular-nums">{bet.toFixed(2)}</span>
                     <span className="ml-1 text-[#8a8a94] text-xs align-baseline">{selectedCurrency === 'MEMETORRENT' ? TOKEN_SYMBOL : 'SOL'}</span>
 
                     {selectedCurrency === 'MEMETORRENT' && (
                       <div className="absolute -top-1.5 -right-1 bg-[#14f195] text-[#0a0a0f] text-[8px] px-1 py-px rounded-full font-bold tracking-tight">+25% RTP</div>
                     )}
-                  </div>
+                  </motion.div>
 
                   <button 
                     onClick={() => adjustBet(1)} 
@@ -1376,21 +1511,34 @@ export default function SolanaReels() {
                   <div className="text-[10px] text-[#f59e0b] mt-0.5">Need some SOL for fees</div>
                 )}
 
-                {/* SPIN with memetorrent just below that */}
-                <button
+                {/* SPIN with memetorrent just below that — enhanced animation */}
+                <motion.button
                   onClick={spin}
                   disabled={isSpinning || isSendingBet || !walletAddress}
+                  whileTap={{ scale: 0.96 }}
+                  animate={
+                    isSpinning || isSendingBet
+                      ? { 
+                          boxShadow: [
+                            "0 4px 0 #8a6f1f, 0 0 0 0 rgba(212,175,55,0.4)",
+                            "0 4px 0 #8a6f1f, 0 0 25px 8px rgba(212,175,55,0.6)",
+                            "0 4px 0 #8a6f1f, 0 0 0 0 rgba(212,175,55,0.4)"
+                          ]
+                        }
+                      : {}
+                  }
+                  transition={isSpinning || isSendingBet ? { duration: 0.9, repeat: Infinity } : {}}
                   className="btn-gold text-sm px-8 sm:px-12 py-2.5 sm:py-3 rounded-3xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-[#0a0a0f] active:scale-[0.985] transition-all mt-2 font-semibold"
                 >
                   <Play className="w-4 h-4" /> 
                   {isSendingBet ? `SENDING ${TOKEN_SYMBOL}...` : isSpinning ? 'SPINNING...' : (selectedCurrency === 'MEMETORRENT' ? 'SPIN WITH $MEMETORRENT' : 'SPIN')}
-                </button>
+                </motion.button>
               </div>
 
               {/* Revenge indicators moved lower so they don't interrupt the clean centered area under the canvas */}
               {hasRevengeToken && !revengeTokenActive && (
                 <div className="mt-3 flex justify-center">
-                  <button
+                  <motion.button
                     onClick={() => {
                       setRevengeTokenActive(true);
                       setRevengeUsesLeft(5);
@@ -1399,17 +1547,27 @@ export default function SolanaReels() {
                         description: '5 boosted spins active — revenge the house!' 
                       });
                     }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                    initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 14 }}
                     className="px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-[#0a0a0f] font-bold text-xs flex items-center gap-1.5 shadow active:scale-[0.985] transition-all"
                   >
                     ⚔️ {t('revenge_activate')} (5 spins)
-                  </button>
+                  </motion.button>
                 </div>
               )}
 
               {revengeTokenActive && revengeUsesLeft > 0 && (
-                <div className="mt-2 text-center px-3 py-1 rounded-2xl bg-[#3b1f0f] border border-[#f59e0b]/60 text-[#fbbf24] text-xs font-medium inline-block">
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                  className="mt-2 text-center px-3 py-1 rounded-2xl bg-[#3b1f0f] border border-[#f59e0b]/60 text-[#fbbf24] text-xs font-medium inline-block"
+                >
                   ⚔️ REVENGE ACTIVE — {revengeUsesLeft} spins left
-                </div>
+                </motion.div>
               )}
 
               {!revengeTokenActive && !hasRevengeToken && recentLosses > 0 && (
@@ -1424,7 +1582,7 @@ export default function SolanaReels() {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-[#8a8a94]">
                   {t('mt_balance')}
-                  <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg">{tokenBalance.toFixed(2)}</span>
+                  <span className="font-mono font-semibold text-[#d4af37] tabular-nums text-lg"><AnimatedNumber value={tokenBalance} decimals={2} /></span>
                   <button 
                     onClick={() => walletAddress && refreshTokenBalance(new PublicKey(walletAddress))}
                     className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-[#8a8a94]"
@@ -1437,7 +1595,7 @@ export default function SolanaReels() {
                 {/* Rockets Balance - P2E currency for MT Ecosystem */}
                 <div className="mt-1 flex items-center gap-2 text-sm">
                   <span className="text-[#8a8a94]">{t('rockets_label')}</span>
-                  <span className="font-mono font-semibold text-[#9945ff] tabular-nums text-lg">{rockets}</span>
+                  <span className="font-mono font-semibold text-[#9945ff] tabular-nums text-lg"><AnimatedNumber value={rockets} /></span>
                 </div>
 
               </div>
@@ -1489,7 +1647,7 @@ export default function SolanaReels() {
               {isConnected ? (
                 <div>
                   <div className="font-mono text-sm text-[#d4af37] mb-1">{walletAddress}</div>
-                  <div className="text-3xl font-semibold tabular-nums">{balance.toFixed(4)} <span className="text-base font-normal text-[#8a8a94]">SOL</span></div>
+                  <div className="text-3xl font-semibold tabular-nums"><AnimatedNumber value={balance} decimals={4} /> <span className="text-base font-normal text-[#8a8a94]">SOL</span></div>
                   <button onClick={refreshBalance} className="mt-3 text-xs flex items-center gap-1 text-[#9945ff] hover:text-[#c084fc]">
                     <RotateCcw size={13} /> Refresh on-chain balance
                   </button>
@@ -1571,6 +1729,71 @@ export default function SolanaReels() {
         </div>
       </div>
 
+      {/* ==================== CELEBRATION OVERLAYS ==================== */}
+
+      {/* Big Win Screen — slow-mo + big confetti + screen shake */}
+      <AnimatePresence>
+        {showBigWin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.4, y: 60, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.85, y: -30, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 140, damping: 16 }}
+              className="text-center"
+            >
+              <div className="text-[15px] tracking-[4px] text-[#f4d35e] mb-1 font-medium">MASSIVE WIN</div>
+              <div className="text-7xl sm:text-8xl font-bold text-white tabular-nums tracking-[-2px]">
+                +{bigWinAmount.toFixed(2)}
+              </div>
+              <div className="text-2xl text-[#d4af37] mt-1 font-semibold">SOL / $MEMETORRENT</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Level Up Full Screen Celebration */}
+      <AnimatePresence>
+        {showLevelUp && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/80">
+            <motion.div
+              initial={{ scale: 0.3, opacity: 0, rotate: -12 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 180, damping: 14 }}
+              className="text-center"
+            >
+              <div className="text-[#14f195] text-lg tracking-[3px] mb-2">LEVEL UP</div>
+              <div className="text-[92px] font-bold text-white leading-none tabular-nums">{showLevelUp.level}</div>
+              <div className="text-3xl text-[#d4af37] mt-2">LEVEL</div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Achievement Celebration */}
+      <AnimatePresence>
+        {showAchievement && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/75">
+            <motion.div
+              initial={{ y: 80, opacity: 0, scale: 0.8 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 220, damping: 18 }}
+              className="text-center px-6"
+            >
+              <div className="text-[#f4d35e] text-sm tracking-[4px] mb-2">ACHIEVEMENT UNLOCKED</div>
+              <div className="text-5xl sm:text-6xl font-bold text-white">{showAchievement}</div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Paytable Modal */}
       <AnimatePresence>
         {showPaytable && (
@@ -1629,18 +1852,20 @@ export default function SolanaReels() {
               <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-[#1a1a22] rounded-2xl border border-[#33333a]">
                 <div className="text-sm font-medium text-[#d4af37] mb-2">{t('buy_mt_title')}</div>
                 <div className="grid grid-cols-1 gap-2">
-                  <button 
+                  <motion.button 
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => buyRocketsWithMT({ rockets: 100, costMT: 50 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
                     {t('pack_100')}
-                  </button>
-                  <button 
+                  </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => buyRocketsWithMT({ rockets: 300, costMT: 120 })}
                     className="w-full py-2 rounded-xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
                   >
                     {t('pack_300')}
-                  </button>
+                  </motion.button>
                 </div>
                 <div className="text-[10px] text-[#8a8a94] mt-2 text-center">{t('buy_mt_note')}</div>
               </div>
