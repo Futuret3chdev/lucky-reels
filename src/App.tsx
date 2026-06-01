@@ -864,37 +864,15 @@ export default function SolanaReels() {
     <div className="min-h-screen bg-[#0a0a0f] text-[#e2e2e8] selection:bg-[#d4af37] selection:text-[#0a0a0f]">
       <Toaster position="top-center" richColors closeButton />
 
-      {/* Top Bar */}
+      {/* Top Bar - Clean MT ECO SYSTEM Branding */}
       <div className="border-b border-[#222228] bg-[#0a0a0f]/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#d4af37] to-[#f4d35e] flex items-center justify-center">
-                <span className="text-[#0a0a0f] text-2xl font-bold tracking-tighter">◎</span>
-              </div>
-              <div>
-                <div className="font-display text-2xl font-bold tracking-[-1.5px] text-white">MT ECO SYSTEM</div>
-                <div className="text-[10px] text-[#8a8a94] -mt-1">MEMETORRENT GAMES • BY FUTURET3CH</div>
-              </div>
-            </div>
-            <div className="px-3 py-1 rounded-full text-xs bg-[#1f1f26] text-[#14f195] border border-[#33333a] font-medium">
-              MAINNET • LIVE
-            </div>
+          <div>
+            <div className="font-display text-xl font-bold tracking-[-1px] text-white">MAINNET • REAL ON-CHAIN BETS • LIVE</div>
+            <div className="text-[11px] text-[#14f195] -mt-0.5">Helius</div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Language Selector */}
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-[#1f1f26] border border-[#33333a] text-xs rounded-xl px-2 py-1 text-[#8a8a94] focus:outline-none"
-            >
-              <option value="en">EN</option>
-              <option value="es">ES</option>
-              <option value="zh">中文</option>
-              <option value="pt">PT</option>
-            </select>
-
             <button 
               onClick={() => setSoundEnabled(!soundEnabled)} 
               className="p-2.5 rounded-xl hover:bg-[#1f1f26] transition-colors"
@@ -944,34 +922,7 @@ export default function SolanaReels() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 pt-10 pb-16">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#1f1f26] text-xs tracking-[2px] text-[#d4af37] mb-4 border border-[#33333a]">
-            MAINNET • REAL ON-CHAIN BETS • LIVE
-            {import.meta.env.VITE_SOLANA_RPC_URL ? (
-              <button
-                onClick={() => {
-                  const url = import.meta.env.VITE_SOLANA_RPC_URL;
-                  const masked = url.includes('?api-key=') 
-                    ? url.split('?api-key=')[0] + '?api-key=••••••••'
-                    : url;
-                  toast.info('Current RPC', { description: masked });
-                }}
-                className="ml-2 px-2 py-0.5 rounded-full bg-[#14f195] text-[#0a0a0f] text-[10px] font-bold hover:bg-[#0f9f6e] transition-colors"
-              >
-                Helius
-              </button>
-            ) : (
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-[#fbbf24] text-[#0a0a0f] text-[10px] font-bold">
-                Public RPC
-              </span>
-            )}
-          </div>
-          <h1 className="font-display text-6xl md:text-7xl font-bold tracking-[-3px] text-white mb-2">MT ECO SYSTEM</h1>
-          <p className="text-[#8a8a94] text-xl">Premium games powered by Memetorrent • Developed by Futuret3ch</p>
-        </div>
-
+      <div className="max-w-6xl mx-auto px-6 pt-6 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* THE MACHINE */}
           <div className="lg:col-span-8">
@@ -1154,12 +1105,6 @@ export default function SolanaReels() {
                 <div className="mt-1 flex items-center gap-2 text-sm">
                   <span className="text-[#8a8a94]">Rockets</span>
                   <span className="font-mono font-semibold text-[#9945ff] tabular-nums text-lg">{rockets}</span>
-                  <button 
-                    onClick={() => setShowBuyRockets(true)}
-                    className="ml-2 text-[10px] px-2 py-0.5 rounded bg-[#9945ff] text-white hover:bg-[#7c2dd6]"
-                  >
-                    Buy Rockets
-                  </button>
                 </div>
 
               </div>
@@ -1407,20 +1352,40 @@ export default function SolanaReels() {
                 Rockets are the P2E currency of the MT ECO SYSTEM. Use them across all games for features, boosts, and rewards.
               </p>
 
-              <div className="space-y-3">
-                <button 
-                  onClick={() => {
-                    // Later this can open a proper on-ramp or ecosystem purchase flow
-                    window.open('https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump', '_blank');
-                    setShowBuyRockets(false);
-                  }}
-                  className="w-full py-3 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
-                >
-                  Buy $MT on Jupiter (then earn Rockets in-game)
-                </button>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm font-medium mb-2">Buy Rockets with $MT</div>
+                  <button 
+                    onClick={() => {
+                      // This will later be a proper on-chain or off-chain purchase flow inside the MT Ecosystem
+                      // For now it opens a swap as a bridge
+                      window.open('https://jup.ag/swap?sell=ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump&buy=So11111111111111111111111111111111111111112', '_blank');
+                    }}
+                    className="w-full py-3 rounded-2xl bg-[#1f1f26] hover:bg-[#25252d] border border-[#33333a] text-sm font-medium"
+                  >
+                    Swap $MT → Rockets (Coming to MT Wallet)
+                  </button>
+                </div>
 
-                <div className="text-xs text-[#8a8a94]">
-                  Or earn Rockets by playing games in the MT ECO SYSTEM.
+                <div>
+                  <div className="text-sm font-medium mb-2">Buy Rockets Packs (Ecosystem)</div>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button 
+                      onClick={() => { if (tokenBalance >= 50) { setTokenBalance(b => b - 50); setRockets(r => r + 100); toast.success('+100 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                      className="w-full py-2.5 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
+                    >
+                      100 Rockets — 50 $MT
+                    </button>
+                    <button 
+                      onClick={() => { if (tokenBalance >= 120) { setTokenBalance(b => b - 120); setRockets(r => r + 300); toast.success('+300 Rockets purchased!'); } else toast.error('Not enough $MT'); }}
+                      className="w-full py-2.5 rounded-2xl bg-[#9945ff] hover:bg-[#7c2dd6] text-sm font-medium"
+                    >
+                      300 Rockets — 120 $MT (Best Value)
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-[#8a8a94] mt-1 text-center">
+                    Purchases are processed in the MT ECO SYSTEM.
+                  </div>
                 </div>
               </div>
 
