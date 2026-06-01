@@ -198,7 +198,12 @@ export default function SolanaReels() {
   // Wallet State (100% Real)
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0); // SOL balance
-  const [tokenBalance, setTokenBalance] = useState<number>(0); // $MEMETORRENT balance
+  const [tokenBalance, setTokenBalance] = useState<number>(0); // $MT balance
+  const [isLoadingTokenBalance, setIsLoadingTokenBalance] = useState(false);
+
+  // Rockets - P2E cross-game currency (separate from $MT balance)
+  const [rockets, setRockets] = useState<number>(0);
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletProvider, setWalletProvider] = useState<any>(null); // For signing real transactions
 
@@ -382,10 +387,18 @@ export default function SolanaReels() {
       setWalletAddress(publicKey);
       setWalletProvider(provider); // Store for real transaction signing
 
-      // Fetch real balance
+      // Fetch real balances immediately on connect (auto-show $MT balance)
       const pubKey = new PublicKey(publicKey);
       const lamports = await CONNECTION.getBalance(pubKey);
       setBalance(lamports / LAMPORTS_PER_SOL);
+
+      // Auto fetch $MT balance (with small retry for reliability)
+      await refreshTokenBalance(pubKey);
+      setTimeout(() => {
+        if (walletAddress === publicKey) {
+          refreshTokenBalance(pubKey);
+        }
+      }, 1200);
 
       toast.success(`Connected to ${walletType.charAt(0).toUpperCase() + walletType.slice(1)}`, {
         description: publicKey.slice(0, 4) + '...' + publicKey.slice(-4),
@@ -983,7 +996,7 @@ export default function SolanaReels() {
                     <span className="text-[#d4af37] font-medium">Bet with {TOKEN_NAME}</span>
                   </div>
                   <a 
-                    href={`https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=${MEMETORRENT_MINT.toBase58()}`}
+                    href="https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 py-1 text-[10px] rounded bg-[#9945ff] hover:bg-[#7c2dd6] text-white font-medium"
