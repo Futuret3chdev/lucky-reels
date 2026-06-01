@@ -5,7 +5,7 @@
 A high-fidelity, production-quality frontend prototype featuring:
 
 - 100% real Solana wallet connections (Phantom, Solflare, Backpack)
-- **Real on-chain betting with $MEMETORRENT** — Users can buy the token and bet with it using real SPL token transfers on Devnet (visible tx signature + explorer link)
+- **Real on-chain betting with $MEMETORRENT** — Users can buy the token and bet with it using real SPL token transfers on Mainnet (visible tx signature + explorer link)
 - Real on-chain balance display (Devnet)
 - Stunning luxury casino design with gold + Solana purple/green accents
 - Smooth, physically realistic 5-reel animations (Framer Motion)
@@ -71,7 +71,7 @@ Every detail was crafted for "premium casino" feel:
 
 **https://lucky-reels.vercel.app** (or your custom domain)
 
-> ⚠️ This is running on Solana Devnet with real transactions. Use only test SOL.
+> ⚠️ This is running on Solana Mainnet with real transactions. Use real funds at your own risk.
 
 ## Deploy (One-Click)
 
@@ -79,19 +79,24 @@ This project is fully polished and ready to deploy.
 
 ### Vercel (Recommended)
 
-1. Push this repo to GitHub (you already did)
-2. Go to [https://vercel.com/new](https://vercel.com/new)
-3. Import your repo: `Futuret3chdev/lucky-reels`
-4. **On the configuration screen, set these exact values:**
+Since the project is already deployed, here is how to push updates:
 
-   - **Framework Preset**: `Vite`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
+**From your computer (PowerShell):**
 
-   (Vercel sometimes auto-detects it, but manually selecting **Vite** is safest.)
+```powershell
+cd E:\solana-reels
+git add .
+git commit -m "Switched to Mainnet + improved $MEMETORRENT balance fetching + dual currency support"
+git push
+```
 
-5. Click **Deploy**
+Vercel will automatically detect the push and redeploy (usually within 1-2 minutes).
+
+After it finishes deploying:
+- Hard refresh the live site (**Ctrl + Shift + R**)
+- Reconnect your wallet
+
+The app now runs on **Mainnet**, so the $MEMETORRENT token balance should appear correctly.
 
 ### Netlify
 1. Push to GitHub

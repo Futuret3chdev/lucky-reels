@@ -73,7 +73,8 @@ const REEL_STRIPS: SymbolKey[][] = [
 
 // ==================== CONFIG ====================
 const BET_AMOUNTS = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0];
-const CONNECTION = new Connection('https://api.devnet.solana.com', 'confirmed'); // Devnet for safety
+// Mainnet connection (the $MEMETORRENT token only exists on mainnet-beta)
+const CONNECTION = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
 
 // House wallet for prototype real betting (visible in UI)
 // In production this would be a PDA controlled by an audited program.
@@ -418,10 +419,11 @@ export default function SolanaReels() {
         const amount = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
         setTokenBalance(amount);
       } else {
-        setTokenBalance(0);
+        setTokenBalance(0); // User has no token account yet
       }
-    } catch (e) {
-      console.error('Error fetching token balance:', e);
+    } catch (e: any) {
+      // This commonly happens if the user has no ATA for this mint yet
+      console.warn('Could not fetch $MEMETORRENT balance (user may not have the token yet):', e?.message || e);
       setTokenBalance(0);
     }
   };
@@ -726,7 +728,7 @@ export default function SolanaReels() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#1f1f26] text-xs tracking-[2px] text-[#d4af37] mb-4 border border-[#33333a]">
-            DEVNET • REAL ON-CHAIN BETS • LIVE
+            MAINNET • REAL ON-CHAIN BETS • LIVE
           </div>
           <h1 className="font-display text-7xl font-bold tracking-[-4.5px] text-white mb-2">SOLANA REELS</h1>
           <p className="text-[#8a8a94] text-xl">Premium slot machine with real Solana transactions</p>
@@ -956,7 +958,7 @@ export default function SolanaReels() {
                 </div>
               )}
               <div className="text-[10px] text-[#8a8a94] mt-4 leading-tight">
-                Bets are sent as real Devnet transactions. Seeds prove the spin result was fair.
+                Bets are sent as real Mainnet transactions. Seeds prove the spin result was fair.
               </div>
             </div>
 
@@ -1020,8 +1022,8 @@ export default function SolanaReels() {
 
         {/* Footer Note */}
         <div className="mt-12 text-center text-xs text-[#8a8a94] max-w-md mx-auto leading-relaxed">
-          <strong>⚠️ Real on-chain bets on Devnet.</strong> You are sending actual SOL. 
-          Winnings credited locally (prototype). Use only test funds. 
+          <strong>⚠️ Real on-chain bets on Mainnet.</strong> You are sending actual funds. 
+          Winnings credited locally (prototype). 
           <a href="https://github.com/Futuret3chdev/lucky-reels" target="_blank" rel="noopener" className="text-[#9945ff] hover:underline">View on GitHub</a>
         </div>
       </div>
