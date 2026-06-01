@@ -9,12 +9,18 @@ export default defineConfig({
     react(), 
     tailwindcss(),
     nodePolyfills({
-      // Whether to polyfill `node:` protocol imports.
       protocolImports: true,
-      // We specifically need Buffer for @solana/web3.js and @solana/spl-token
-      include: ['buffer'],
+      // Polyfill everything needed for Solana libraries
+      include: ['buffer', 'process', 'util'],
     }),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {
@@ -30,5 +36,7 @@ export default defineConfig({
   },
   define: {
     'global.Buffer': 'globalThis.Buffer',
+    'global.process': 'process',
+    'global': 'globalThis',
   },
 })

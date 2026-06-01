@@ -179,16 +179,24 @@ This is a known browser compatibility issue with Solana libraries.
 
 ### How to Deploy the Fix
 
+Run these commands in PowerShell:
+
 ```powershell
 cd E:\solana-reels
 git add .
-git commit -m "Fixed 'Buffer is not defined' error with proper browser polyfills"
+git commit -m "Fixed 'Buffer is not defined' error with proper browser polyfills for Solana libraries"
 git push
 ```
 
-Then redeploy on Vercel (or let it auto-deploy from the GitHub push).
+Then:
 
-After the new deployment is live, do a hard refresh (`Ctrl + Shift + R`).
+1. Go to your Vercel project.
+2. Wait for the automatic deployment from the push, **or** manually click **Redeploy** on the latest deployment.
+3. Once it shows "Ready", open the live site and do a **hard refresh**:
+   - Windows/Linux: `Ctrl + Shift + R`
+   - Mac: `Cmd + Shift + R`
+
+This should eliminate the `Buffer is not defined` error when trying to place on-chain bets with $MEMETORRENT.
 
 ---
 
